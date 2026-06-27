@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtime BINGO</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            text-align: center; 
+            background: #f4f4f9; 
+            padding: 20px; 
+        }
+        .setup-container, .game-container { 
+            max-width: 400px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        .hidden { 
+            display: none; 
+        }
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 5px; 
+            margin-top: 20px; 
+        }
+        .cell { 
+            aspect-ratio: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: #e0e0e0; 
+            font-weight: bold; 
+            font-size: 1.2rem; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            user-select: none; 
+        }
+        .cell.marked { 
+            background: #4caf50; 
+            color: white; 
+        }
+        .cell.drawn-match { 
+            border: 3px solid #ff5722; 
+        }
+        button { 
+            padding: 10px 20px; 
+            font-size: 1rem; 
+            margin: 5px; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            border: none; 
+            background: #007bff; 
+            color: white; 
+        }
+        input { 
+            padding: 10px; 
+            font-size: 1rem; 
+            width: 60%; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+        }
+        #drawn-list { 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            color: #ff5722; 
+            margin: 15px 0; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎉 Realtime 5x5 BINGO</h1>
+
+    <div id="setup" class="setup-container">
+        <h3>Enter Room Code to Play</h3>
+        <input type="text" id="room-input" placeholder="e.g., LUCH7">
+        <br><br>
+        <button onclick="joinGame()">Join/Create Game</button>
+    </div>
+
+    <div id="game" class="game-container hidden">
+        <h2>Room: <span id="room-display"></span></h2>
+        <div id="drawn-list">Waiting for game to start...</div>
+        <button id="draw-btn" onclick="drawNumber()">Draw Next Number</button>
+        
+        <div id="board" class="grid"></div>
+        <h3 id="win-status" style="color: green;"></h3>
+    </div>
+
+    <script>
+        // 1. Database Credentials
+        const SUPABASE_URL = "https://euzjovtsereckmwvvunm.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1empvdnRzZXJlY2ttd3Z2dW5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NDYxODAsImV4cCI6MjA4OTAyMjE4MH0.dTRA6a8B-fPjjeaRlM6c8NwhbYWCJgCuF1c9Oz4RY7I";
+        
+        // 2. Initialize Client with a unique identifier name to bypass cache leaks
+        const supabaseApp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 3. Game State
+        let currentRoom = null;
+        let myBoard = [];
+        let drawnNumbers = [];
+
+        // 4. Generate randomized 1-25 array for player's board
+        function generateRandomBoard() {
+            let nums = Array.from({length: 25}, (_, i) => i + 1);
+            return nums.sort(() => Math.random() - 0.5);
+        }
+
+        // 5. Join or Create Room (Updated with precise error reporting)
+        async function joinGame() {
+            const roomCode = document.getElementById('room-input').value.trim().toUpperCase();
+            if (!roomCode) return alert("Please enter a room code!");
+
+            try {
+                let { data: game, error: fetchError } = await supabaseApp
+                    .from('games')
+                    .select('*')
+                    .eq('room_code', roomCode)
+                    .maybeSingle();
+
+                if (fetchError) {
+                    console.error("Supabase Database Fetch Error:", fetchError);
+                    return alert(`Database Error: ${fetchError.message}`);
+                }
+
+                if (!game) {
+                    const { data: newGame, error: insertError } = await supabaseApp
+                        .from('games')
+                        .insert([{ room_code: roomCode }])
+                        .select()
+                        .single();
+                        
+                    if (insertError) {
+                        console.error("Supabase Database Insert Error:", insertError);
+                        return alert(`Failed to create room: ${insertError.message}`);
+                    }
+                    game = newGame;
+                }
+
+                if (!game) {
+                    return alert("Room data is empty.");
+                }
+
+                currentRoom = game.room_code;
+                drawnNumbers = game.numbers_drawn || [];
+                myBoard = generateRandomBoard();
+
+                document.getElementById('setup').classList.add('hidden');
+                document.getElementById('game').classList.remove('hidden');
+                document.getElementById('room-display').innerText = currentRoom;
+
+                renderBoard();
+                updateDrawnUI();
+                listenToRoom();
+            } catch (err) {
+                console.error("Unexpected Script Error:", err);
+                alert("Something unexpected happened. Check console.");
+            }
+        }
+        // 6. Render Player Board
+        function renderBoard() {
+            const boardDiv = document.getElementById('board');
+            boardDiv.innerHTML = '';
+            
+            myBoard.forEach((num) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.innerText = num;
+                cell.dataset.num = num;
+
+                if (drawnNumbers.includes(num)) {
+                    cell.classList.add('drawn-match');
+                }
+
+                cell.addEventListener('click', () => {
+                    cell.classList.toggle('marked');
+                    checkBingo();
+                });
+
+                boardDiv.appendChild(cell);
+            });
+        }
+
+        // 7. Realtime Listener for sync across phones
+        function listenToRoom() {
+            supabaseApp
+                .channel('schema-db-changes')
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', filter: `room_code=eq.${currentRoom}`, schema: 'public', table: 'games' },
+                    (payload) => {
+                        drawnNumbers = payload.new.numbers_drawn;
+                        updateDrawnUI();
+                        highlightMatchingNumbers();
+                    }
+                )
+                .subscribe();
+        }
+
+        // 8. Draw a Number (Updates DB, syncing all users)
+        async function drawNumber() {
+            if (drawnNumbers.length >= 25) return alert("All numbers drawn!");
+
+            let available = Array.from({length: 25}, (_, i) => i + 1).filter(n => !drawnNumbers.includes(n));
+            let nextNum = available[Math.floor(Math.random() * available.length)];
+            
+            let updatedDrawn = [...drawnNumbers, nextNum];
+
+            await supabaseApp
+                .from('games')
+                .update({ numbers_drawn: updatedDrawn })
+                .eq('room_code', currentRoom);
+        }
+
+        // 9. UI Updates
+        function updateDrawnUI() {
+            if(drawnNumbers.length === 0) {
+                document.getElementById('drawn-list').innerText = "No numbers drawn yet.";
+            } else {
+                document.getElementById('drawn-list').innerText = `Last Drawn: ${drawnNumbers[drawnNumbers.length - 1]} (History: ${drawnNumbers.join(', ')})`;
+            }
+        }
+
+        function highlightMatchingNumbers() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                let num = parseInt(cell.dataset.num);
+                if (drawnNumbers.includes(num)) {
+                    cell.classList.add('drawn-match');
+                }
+            });
+        }
+
+        // 10. Check for 5 consecutive lines (B-I-N-G-O)
+        function checkBingo() {
+            const cells = Array.from(document.querySelectorAll('.cell'));
+            let markedMatrix = [];
+            for (let i = 0; i < 5; i++) {
+                markedMatrix.push(cells.slice(i*5, (i+1)*5).map(c => c.classList.contains('marked')));
+            }
+
+            let lines = 0;
+
+            for(let r=0; r<5; r++) {
+                if (markedMatrix[r].every(v => v === true)) lines++;
+            }
+            for(let c=0; c<5; c++) {
+                if ([0,1,2,3,4].every(r => markedMatrix[r][c] === true)) lines++;
+            }
+            if ([0,1,2,3,4].every(i => markedMatrix[i][i] === true)) lines++;
+            if ([0,1,2,3,4].every(i => markedMatrix[i][4-i] === true)) lines++;
+
+            if (lines >= 5) {
+                document.getElementById('win-status').innerText = "🎉 BINGO! YOU WIN! 🎉";
+            } else {
+                document.getElementById('win-status').innerText = `Lines completed: ${lines}/5`;
+            }
+        }
+    </script>
+</body>
+</html>
