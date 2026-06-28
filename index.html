@@ -142,6 +142,7 @@
             pointer-events: none;
             transition: opacity 0.3s ease-in;
         }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -172,42 +173,36 @@
     <script>
         let deferredPrompt = null;
 
-        // 1. Register Service Worker securely
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registered successfully:', reg.scope))
-                    .catch(err => console.error('Service Worker registration failed:', err));
+                    .then(reg => console.log('SW Registered:', reg.scope))
+                    .catch(err => console.error('SW Registration Failed:', err));
             });
         }
 
-        // 2. Intercept native browser installation prompts
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); // Stop default small mini-infobar prompt banner
-            deferredPrompt = e;  // Store event pointer reference
-            
-            // Show the custom install option button element natively
+            e.preventDefault();
+            deferredPrompt = e;
             const installBtn = document.getElementById('pwa-install-btn');
             if (installBtn) installBtn.classList.remove('hidden');
         });
 
-        // 3. Execution function triggered by custom install option button clicks
         function triggerPWAInstallation() {
             if (!deferredPrompt) return;
-            
-            deferredPrompt.prompt(); // Open default device home screen overlay dialog
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User confirmed installation!');
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choice) => {
+                if (choice.outcome === 'accepted') {
+                    document.getElementById('pwa-install-btn').classList.add('hidden');
                 }
-                deferredPrompt = null; // Flush capture stream token safely
-                document.getElementById('pwa-install-btn').classList.add('hidden');
+                deferredPrompt = null;
             });
         }
 
+        // FIXED FUNCTION NAME MATCHING THE BUTTON'S CLICK EVENT
         function enterBattleArenaWithTransition() {
             const curtain = document.getElementById('flash-curtain');
-            curtain.style.opacity = "1";
+            if(curtain) curtain.style.opacity = "1";
 
             setTimeout(() => {
                 const searchParams = window.location.search;
