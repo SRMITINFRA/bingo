@@ -22,12 +22,23 @@
         h1.main-title { font-size: 2.5rem; font-weight: 800; background: linear-gradient(to right, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; letter-spacing: -1px; }
         .glass-panel { background: var(--panel-bg); backdrop-filter: blur(16px); border: 1px solid var(--border-glass); border-radius: 24px; padding: 30px; width: 100%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         
-        .game-layout { display: flex; gap: 30px; max-width: 1100px; width: 100%; justify-content: center; flex-wrap: wrap; position: relative; }
-        .board-container { flex: 1; min-width: 320px; max-width: 480px; background: rgba(30, 41, 59, 0.4); padding: 20px; border-radius: 20px; border: 1px solid var(--border-glass); position: relative; }
-        .board-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+        /* Layout Configurations focusing space completely on local arena elements */
+        .game-layout { display: flex; gap: 30px; max-width: 500px; width: 100%; justify-content: center; position: relative; }
+        .board-container { flex: 1; width: 100%; background: rgba(30, 41, 59, 0.4); padding: 20px; border-radius: 20px; border: 1px solid var(--border-glass); position: relative; }
+        .board-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); text-align: center; }
         .board-title.active-user { color: var(--primary); }
         .hidden { display: none !important; }
         
+        /* Minimal Top Action Row Utility Items */
+        .top-status-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 500px; margin-bottom: 12px; padding: 0 4px; }
+        .live-status-indicator { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.85rem; color: var(--text-muted); }
+        .indicator-dot { width: 8px; height: 8px; border-radius: 50%; background: #64748b; transition: all 0.3s; }
+        .indicator-dot.active { background: var(--success); box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        .btn-action-icon { background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+        .btn-action-icon:hover { background: rgba(255,255,255,0.15); }
+
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
         input, select { width: 100%; padding: 14px 18px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-glass); border-radius: 12px; color: #fff; font-size: 1rem; }
@@ -36,25 +47,19 @@
         .radio-tab.active { background: var(--primary); border-color: var(--primary); }
         button.btn-premium { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%); border: none; border-radius: 14px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
         
-        .scoreboard { display: flex; justify-content: space-between; background: rgba(15, 23, 42, 0.5); padding: 15px 20px; border-radius: 16px; margin-bottom: 20px; width: 100%; max-width: 500px; border: 1px solid var(--border-glass); }
+        .scoreboard { display: flex; justify-content: space-between; background: rgba(15, 23, 42, 0.5); padding: 15px 20px; border-radius: 16px; margin-bottom: 15px; width: 100%; max-width: 500px; border: 1px solid var(--border-glass); }
         .score-box { text-align: center; }
         .score-box .name { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
         .score-box .val { font-size: 1.8rem; font-weight: 800; }
         
-        /* Video Stream Layout Elements */
-        .video-card { display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-glass); border-radius: 14px; padding: 12px 20px; margin-bottom: 20px; width: 100%; max-width: 500px; }
-        .video-badge { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.9rem; }
-        .indicator-dot { width: 10px; height: 10px; border-radius: 50%; background: #64748b; }
-        .indicator-dot.active { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        
-        /* Video Windows: Local PIP & Opponent Screen Header Overlay */
-        .opponent-video-window { width: 100%; height: 130px; background: #0f172a; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 1px solid var(--border-glass); }
+        /* Compact Overlay Camera Frame Layers */
+        .opponent-video-window { width: 100%; height: 120px; background: #0f172a; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 1px solid var(--border-glass); }
         .opponent-video-window video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         
-        .local-video-pip { position: fixed; bottom: 20px; right: 20px; width: 95px; height: 95px; border-radius: 50%; border: 3px solid var(--primary); overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 999; background: #0f172a; }
+        .local-video-pip { position: fixed; bottom: 20px; right: 20px; width: 85px; height: 85px; border-radius: 50%; border: 2px solid var(--primary); overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 999; background: #0f172a; }
         .local-video-pip video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 
-        .status-banner { padding: 14px; border-radius: 12px; font-weight: 700; margin-bottom: 20px; text-align: center; width: 100%; max-width: 500px; }
+        .status-banner { padding: 14px; border-radius: 12px; font-weight: 700; margin-bottom: 15px; text-align: center; width: 100%; max-width: 500px; }
         .status-banner.turn { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
         .status-banner.wait { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
         
@@ -67,9 +72,8 @@
         .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border-glass); border-radius: 8px; font-weight: 700; font-size: 1.1rem; cursor: pointer; user-select: none; transition: all 0.2s; }
         .cell:hover:not(.chosen) { background: var(--primary); color: white; }
         .cell.chosen { background: linear-gradient(135deg, var(--accent) 0%, #be123c 100%); color: white; cursor: not-allowed; border: none; }
-        .cell.opponent-view { cursor: not-allowed; }
         
-        .footer-actions { display: flex; gap: 12px; margin-top: 20px; width: 100%; max-width: 500px; }
+        .footer-actions { display: flex; gap: 12px; margin-top: 15px; width: 100%; max-width: 500px; }
         .btn-secondary { background: rgba(64, 74, 89, 0.4); border: 1px solid var(--border-glass); color: #fff; flex: 1; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; }
         .btn-secondary:disabled { opacity: 0.3; cursor: not-allowed; }
     </style>
@@ -116,6 +120,15 @@
     </div>
 
     <div id="arena-panel" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        
+        <div class="top-status-bar">
+            <div class="live-status-indicator">
+                <div class="indicator-dot" id="voice-dot"></div>
+                <span id="voice-text">Connecting...</span>
+            </div>
+            <button id="invite-btn" class="btn-action-icon hidden" onclick="shareInviteLinkWhatsApp()">🔗 Share</button>
+        </div>
+
         <div class="scoreboard">
             <div class="score-box">
                 <div class="name" id="p1-title">Player 1</div>
@@ -127,31 +140,17 @@
             </div>
         </div>
 
-        <div class="voice-card" id="voice-interface" style="display:none;">
-            <div class="voice-badge">
-                <div class="indicator-dot" id="voice-dot"></div>
-                <span id="voice-text">Video Chat: Disconnected</span>
-            </div>
-            <button id="invite-btn" class="btn-secondary" style="padding: 6px 14px; font-size: 0.85rem; max-width: fit-content;" onclick="shareInviteLinkWhatsApp()">WhatsApp Invite 🔗</button>
-        </div>
-
         <div id="status-banner" class="status-banner turn">Your Turn</div>
-        <button id="start-btn" class="btn-premium hidden" style="max-width:500px; margin-bottom:20px;" onclick="startRoundLoop()">Start Round</button>
+        <button id="start-btn" class="btn-premium hidden" style="max-width:500px; margin-bottom:15px;" onclick="startRoundLoop()">Start Round</button>
 
         <div class="game-layout">
             <div class="board-container">
-                <div class="board-title active-user" id="local-board-label">Your Board</div>
-                <div class="word-tracker" id="word-container-p1"></div>
-                <div id="board-p1" class="grid"></div>
-            </div>
-            
-            <div class="board-container" id="opponent-panel">
                 <div class="opponent-video-window" id="opponent-video-container" style="display:none;">
                     <video id="remote-video" autoplay playsinline></video>
                 </div>
-                <div class="board-title" id="remote-board-label">Opponent Board</div>
-                <div class="word-tracker" id="word-container-p2"></div>
-                <div id="board-p2" class="grid"></div>
+                <div class="board-title active-user" id="local-board-label">Your Board</div>
+                <div class="word-tracker" id="word-container-p1"></div>
+                <div id="board-p1" class="grid"></div>
             </div>
         </div>
 
@@ -182,7 +181,6 @@
         let gameState = { history: [], game_status: 'waiting', p1_score:0, p2_score:0 };
         let gameChannel = null;
 
-        // Custom STUN and Relayed TURN Server Credentials Array Configuration
         const rtcConfig = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -230,9 +228,7 @@
 
         function triggerAutomaticGameFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log("Automatic fullscreen blocked by mobile client interaction browser guidelines:", err);
-                });
+                document.documentElement.requestFullscreen().catch(err => {});
             }
         }
 
@@ -262,9 +258,12 @@
             opponentBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
             gameState = { history: [], game_status: 'playing', p1_score: 0, p2_score: 0, player1_name: playerName, player2_name: "CPU", grid_scale: gridSize };
             myRole = 'p1';
-            document.getElementById('voice-interface').style.display = 'none';
+            
+            document.getElementById('invite-btn').classList.add('hidden');
             document.getElementById('local-video-container').classList.add('hidden');
             document.getElementById('opponent-video-container').style.display = 'none';
+            updateVoiceIndicator("Single Player Mode Active", true);
+            
             setupUILayoutContainers();
             triggerAutomaticGameFullscreen();
         }
@@ -314,45 +313,37 @@
                     localStorage.setItem(boardKey, JSON.stringify(myBoard));
                 }
 
-                document.getElementById('voice-interface').style.display = 'flex';
-                document.getElementById('opponent-panel').classList.remove('hidden');
+                document.getElementById('invite-btn').classList.remove('hidden');
                 document.getElementById('opponent-video-container').style.display = 'block';
                 document.getElementById('local-video-container').classList.remove('hidden');
 
                 setupUILayoutContainers();
                 connectRealtimeSyncStream();
                 initializeVideoMediaHardware();
-            } catch (x) { 
-                console.error(x); 
-            }
+            } catch (x) { console.error(x); }
         }
 
-        /* WEBRTC INTEGRATED AUDIO & VIDEO CHAT CONTEXT MANAGEMENT Engine */
         async function initializeVideoMediaHardware() {
             try {
-                updateVoiceIndicator("Accessing camera & mic...", false);
-                // Request both video and audio tracks simultaneously
+                updateVoiceIndicator("Requesting Camera...", false);
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
                 
                 const localVideo = document.getElementById('local-video');
                 if(localVideo) localVideo.srcObject = localStream;
                 
-                updateVoiceIndicator("Camera Ready. Syncing...", false);
-                
+                updateVoiceIndicator("Live Video Ready", false);
                 if (myRole === 'p2') {
                     setTimeout(initiateVoiceCallNegotiation, 1500);
                 }
             } catch (err) {
-                console.error("Camera permissions blocked:", err);
-                updateVoiceIndicator("Media access blocked.", false);
+                console.error(err);
+                updateVoiceIndicator("Media Blocked", false);
             }
         }
 
         async function createPeerConnectionInstance() {
             if (peerConnection) return;
             peerConnection = new RTCPeerConnection(rtcConfig);
-
-            // Append both audio and video hardware tracks to connection stream lines
             localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
             peerConnection.onicecandidate = (event) => {
@@ -365,7 +356,7 @@
                 const remoteVideo = document.getElementById('remote-video');
                 if (remoteVideo) {
                     remoteVideo.srcObject = event.streams[0];
-                    updateVoiceIndicator("Live Video Connected 📹", true);
+                    updateVoiceIndicator("Live Video Connected", true);
                 }
             };
         }
@@ -409,13 +400,9 @@
         function setupUILayoutContainers() {
             document.getElementById('setup-panel').classList.add('hidden');
             document.getElementById('arena-panel').classList.remove('hidden');
-
             document.getElementById('board-p1').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            document.getElementById('board-p2').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
 
             buildWordHeaders('word-container-p1');
-            buildWordHeaders('word-container-p2');
-
             renderBoards();
             syncLocalArenaUI();
         }
@@ -429,7 +416,6 @@
                 .on('broadcast', { event: 'sync' }, (payload) => {
                     if (payload.payload && payload.payload.board && payload.payload.role !== myRole) {
                         opponentBoard = payload.payload.board;
-                        renderBoards();
                     }
                     remoteFetchState();
                 })
@@ -458,8 +444,7 @@
             document.getElementById('p1-score').innerText = gameState.p1_score || 0;
             document.getElementById('p2-score').innerText = gameState.p2_score || 0;
 
-            document.getElementById('local-board-label').innerText = `${gameState.player1_name || "Player 1"}'s Board`;
-            document.getElementById('remote-board-label').innerText = `${gameState.player2_name || "Opponent"}'s Board`;
+            document.getElementById('local-board-label').innerText = `${gameState.player1_name || "Player 1"}'s Arena`;
 
             const banner = document.getElementById('status-banner');
             const startBtn = document.getElementById('start-btn');
@@ -488,7 +473,6 @@
                 undoBtn.disabled = true;
                 refreshBoardVisualMarkings();
                 calculateCrossedLines(myBoard, 'word-container-p1');
-                if(gameMode === 'ai' || opponentBoard.length > 0) calculateCrossedLines(opponentBoard, 'word-container-p2');
 
                 if (currentRoom) {
                     localStorage.removeItem(`b_layout_${currentRoom}_p1`);
@@ -511,7 +495,6 @@
             
             refreshBoardVisualMarkings();
             calculateCrossedLines(myBoard, 'word-container-p1');
-            if(gameMode === 'ai' || opponentBoard.length > 0) calculateCrossedLines(opponentBoard, 'word-container-p2');
 
             if(gameMode === 'ai' && activeSide === 'p2' && gameState.game_status === 'playing') {
                 setTimeout(executeComputerAIAction, 800);
@@ -528,16 +511,6 @@
                 cell.dataset.num = num;
                 cell.addEventListener('click', () => actionCellSelect(num));
                 boardP1.appendChild(cell);
-            });
-
-            const boardP2 = document.getElementById('board-p2');
-            boardP2.innerHTML = '';
-            opponentBoard.forEach(num => {
-                const cell = document.createElement('div');
-                cell.className = 'cell opponent-view';
-                cell.innerText = num;
-                cell.dataset.num = num;
-                boardP2.appendChild(cell);
             });
         }
 
@@ -735,9 +708,7 @@
         }
 
         async function triggerExitRoomCleanup() {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop()); 
-            }
+            if (localStream) { localStream.getTracks().forEach(track => track.stop()); }
             if (peerConnection) peerConnection.close();
 
             if (gameMode === 'pvp' && currentRoom) {
@@ -752,9 +723,7 @@
                     if (gameChannel) gameChannel.send({ type:'broadcast', event:'sync', payload:{} });
                 } catch(e) { console.error(e); }
             }
-            if(document.fullscreenElement) {
-                document.exitFullscreen().catch(()=>{});
-            }
+            if(document.fullscreenElement) { document.exitFullscreen().catch(()=>{}); }
             window.location.href = window.location.origin + window.location.pathname; 
         }
     </script>
