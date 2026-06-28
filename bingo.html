@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Realtime & AI BINGO Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #f43f5e;
+            --success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-glass: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cabinet Grotesk', 'Segoe UI', system-ui, sans-serif; }
+        
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1.main-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #6366f1, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+            letter-spacing: -1px;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 35px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Form Controls */
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        input, select {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2); }
+
+        .radio-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .radio-tab { flex: 1; text-align: center; padding: 12px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-glass); border-radius: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .radio-tab.active { background: var(--primary); border-color: var(--primary); }
+
+        button.btn-premium {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s;
+        }
+        button.btn-premium:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99, 102, 241, 0.4); }
+        button.btn-premium:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Game Arena Elements */
+        .scoreboard { display: flex; justify-content: space-between; background: rgba(15, 23, 42, 0.5); padding: 15px 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border-glass); }
+        .score-box { text-align: center; }
+        .score-box .name { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+        .score-box .val { font-size: 1.8rem; font-weight: 800; color: #fff; }
+
+        .status-banner { padding: 14px; border-radius: 12px; font-weight: 700; margin-bottom: 20px; text-align: center; font-size: 1rem; letter-spacing: 0.5px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1); }
+        .status-banner.turn { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-banner.wait { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        /* Dynamic Word Tracker */
+        .word-tracker { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
+        .letter-node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-glass); border-radius: 10px; font-size: 1.4rem; font-weight: 900; color: #475569; position: relative; transition: all 0.4s; }
+        .letter-node.struck { color: var(--accent); background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.4); box-shadow: 0 0 15px rgba(244, 63, 94, 0.2); }
+        .letter-node.struck::after { content: ''; position: absolute; width: 120%; height: 3px; background: var(--accent); transform: rotate(-30deg); }
+
+        /* Dynamic Grid Engine */
+        .grid { display: grid; gap: 8px; margin: 25px 0; }
+        .cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: calc(1rem + 0.2vw);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        .cell:hover:not(.chosen) { background: var(--primary); color: white; transform: scale(1.05); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); }
+        .cell.chosen { background: linear-gradient(135deg, var(--accent) 0%, #be123c 100%); color: white; cursor: not-allowed; border: none; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3); animation: pop 0.3s ease; }
+
+        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .footer-actions { display: flex; gap: 12px; }
+        .btn-secondary { background: rgba(64, 74, 89, 0.4); border: 1px solid var(--border-glass); color: #fff; flex: 1; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-secondary:hover:not(:disabled) { background: rgba(64, 74, 89, 0.7); }
+        .btn-secondary:disabled { opacity: 0.3; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <h1 class="main-title">BINGO ROYALE</h1>
+
+    <div id="setup-panel" class="glass-panel">
+        <div class="form-group">
+            <label>Opponent Type</label>
+            <div class="radio-tabs">
+                <div class="radio-tab active" id="tab-ai" onclick="setMode('ai')">VS Computer</div>
+                <div class="radio-tab" id="tab-pvp" onclick="setMode('pvp')">Online PvP</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Your Profile Name</label>
+            <input type="text" id="name-input" placeholder="Enter warrior alias..." maxlength="12">
+        </div>
+
+        <div class="form-group" id="room-group" class="hidden" style="display:none;">
+            <label>Online Room Code</label>
+            <input type="text" id="room-input" placeholder="e.g. ALPHA99" maxlength="8">
+        </div>
+
+        <div class="form-group" id="ai-diff-group">
+            <label>Computer Difficulty</label>
+            <select id="ai-difficulty">
+                <option value="easy">Easy (Random choices)</option>
+                <option value="medium">Medium (Builds rows)</option>
+                <option value="hard">Hard (Aggressive Block/Attack AI)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Grid Matrix Scale</label>
+            <select id="grid-size" onchange="adaptGridRangeLabel()">
+                <option value="4">4 x 4 Matrix (Numbers 1-16)</option>
+                <option value="5" selected>5 x 5 Matrix (Numbers 1-25)</option>
+                <option value="6">6 x 6 Matrix (Numbers 1-36)</option>
+                <option value="8">8 x 8 Matrix (Numbers 1-64)</option>
+                <option value="10">10 x 10 Matrix (Numbers 1-100)</option>
+            </select>
+        </div>
+
+        <button class="btn-premium" onclick="initiateGameEngine()">Enter Battle Arena</button>
+    </div>
+
+    <div id="arena-panel" class="glass-panel hidden">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="name" id="p1-title">Player 1</div>
+                <div class="val" id="p1-score">0</div>
+            </div>
+            <div class="score-box">
+                <div class="name" id="p2-title">Opponent</div>
+                <div class="val" id="p2-score">0</div>
+            </div>
+        </div>
+
+        <div id="status-banner" class="status-banner turn">Your Turn</div>
+
+        <div class="word-tracker" id="word-container"></div>
+
+        <button id="start-btn" class="btn-premium hidden" onclick="startRoundLoop()">Start New Round</button>
+
+        <div id="board" class="grid"></div>
+
+        <div class="footer-actions">
+            <button id="undo-btn" class="btn-secondary" onclick="triggerUndoAction()" disabled>Undo Last Move</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://euzjovtsereckmwvvunm.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1empvdnRzZXJlY2ttd3Z2dW5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NDYxODAsImV4cCI6MjA4OTAyMjE4MH0.dTRA6a8B-fPjjeaRlM6c8NwhbYWCJgCuF1c9Oz4RY7I";
+        const supabaseApp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let gameMode = 'ai'; // 'ai' or 'pvp'
+        let gridSize = 5;
+        let totalCells = 25;
+        let myBoard = [];
+        let aiBoard = []; // Shuffled layout tracking array specifically generated for computing simulated bot paths
+        let currentRoom = null;
+        let myRole = 'p1'; 
+        let playerName = "";
+        let gameState = { history: [], game_status: 'waiting', p1_score:0, p2_score:0 };
+        let gameChannel = null;
+
+        function setMode(mode) {
+            gameMode = mode;
+            document.getElementById('tab-ai').classList.toggle('active', mode === 'ai');
+            document.getElementById('tab-pvp').classList.toggle('active', mode === 'pvp');
+            document.getElementById('room-group').style.display = mode === 'pvp' ? 'block' : 'none';
+            document.getElementById('ai-diff-group').style.display = mode === 'ai' ? 'block' : 'none';
+        }
+
+        function initiateGameEngine() {
+            playerName = document.getElementById('name-input').value.trim() || "Player";
+            gridSize = parseInt(document.getElementById('grid-size').value);
+            totalCells = gridSize * gridSize;
+
+            // Generate B-I-N-G-O tracking node header structures dynamically matching matrix dimensions
+            const tracker = document.getElementById('word-container');
+            tracker.innerHTML = '';
+            const targetWord = "BINGO".repeat(Math.ceil(gridSize/5)).substring(0, gridSize);
+            for(let i=0; i<gridSize; i++) {
+                tracker.innerHTML += `<div class="letter-node" id="b-l-${i}">${targetWord[i]}</div>`;
+            }
+
+            document.getElementById('board').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+            if (gameMode === 'ai') {
+                launchSinglePlayerMode();
+            } else {
+                launchMultiplayerPvPMode();
+            }
+        }
+
+        /* SINGLE PLAYER CONTROLLER ENGINE WITH DYNAMIC BOT AI */
+        function launchSinglePlayerMode() {
+            myBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            aiBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            
+            gameState = { history: [], game_status: 'playing', p1_score: 0, p2_score: 0, player1_name: playerName, player2_name: "CPU ("+document.getElementById('ai-difficulty').value.toUpperCase()+")" };
+            myRole = 'p1';
+
+            document.getElementById('setup-panel').classList.add('hidden');
+            document.getElementById('arena-panel').classList.remove('hidden');
+            
+            renderBoard();
+            syncLocalArenaUI();
+        }
+
+        /* MULTIPLAYER CONTROLLER WITH INTEGRATED BROADCAST ROUTING */
+        async function launchMultiplayerPvPMode() {
+            const roomCode = document.getElementById('room-input').value.trim().toUpperCase();
+            if(!roomCode) return alert("Specify room connection code!");
+
+            myBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+
+            try {
+                let { data: game } = await supabaseApp.from('games').select('*').eq('room_code', roomCode).maybeSingle();
+
+                if (!game) {
+                    let { data: nGame } = await supabaseApp.from('games').insert([{ room_code: roomCode, player1_name: playerName, history: [] }]).select().single();
+                    game = nGame; myRole = 'p1';
+                } else {
+                    if (game.player1_name === playerName) myRole = 'p1';
+                    else if (game.player2_name === playerName) myRole = 'p2';
+                    else if (!game.player1_name) {
+                        let { data: uG } = await supabaseApp.from('games').update({ player1_name: playerName }).eq('room_code', roomCode).select().single();
+                        game = uG; myRole = 'p1';
+                    } else if (!game.player2_name) {
+                        let { data: uG } = await supabaseApp.from('games').update({ player2_name: playerName }).eq('room_code', roomCode).select().single();
+                        game = uG; myRole = 'p2';
+                    } else { return alert("Room configuration slot filled!"); }
+                }
+
+                currentRoom = roomCode;
+                gameState = game;
+
+                document.getElementById('setup-panel').classList.add('hidden');
+                document.getElementById('arena-panel').classList.remove('hidden');
+                
+                renderBoard();
+                connectRealtimeSyncStream();
+            } catch (x) { console.error(x); }
+        }
+
+        function connectRealtimeSyncStream() {
+            gameChannel = supabaseApp.channel(`arena-${currentRoom}`, { config: { broadcast: { self: true } } });
+            gameChannel
+                .on('postgres_changes', { event: '*', filter: `room_code=eq.${currentRoom}`, schema: 'public', table: 'games' }, (p) => {
+                    gameState = p.new; syncLocalArenaUI();
+                })
+                .on('broadcast', { event: 'sync' }, () => { remoteFetchState(); })
+                .subscribe((s) => {
+                    if(s === 'SUBSCRIBED') {
+                        gameChannel.send({ type:'broadcast', event:'sync', payload:{} });
+                        remoteFetchState();
+                    }
+                });
+        }
+
+        async function remoteFetchState() {
+            let { data: game } = await supabaseApp.from('games').select('*').eq('room_code', currentRoom).maybeSingle();
+            if(game) { gameState = game; syncLocalArenaUI(); }
+        }
+
+        function syncLocalArenaUI() {
+            document.getElementById('p1-title').innerText = gameState.player1_name || "Player 1";
+            document.getElementById('p2-title').innerText = gameState.player2_name || "Opponent";
+            document.getElementById('p1-score').innerText = gameState.p1_score || 0;
+            document.getElementById('p2-score').innerText = gameState.p2_score || 0;
+
+            const banner = document.getElementById('status-banner');
+            const startBtn = document.getElementById('start-btn');
+            const undoBtn = document.getElementById('undo-btn');
+
+            if (gameMode === 'pvp' && (!gameState.player1_name || !gameState.player2_name)) {
+                banner.innerText = "Awaiting deployment entry from opponent...";
+                banner.className = "status-banner wait";
+                return;
+            }
+
+            if (gameState.game_status === 'waiting') {
+                banner.innerText = "Arena initialization complete. Launch round!";
+                banner.className = "status-banner wait";
+                startBtn.classList.remove('hidden');
+                undoBtn.disabled = true;
+                return;
+            }
+
+            startBtn.classList.add('hidden');
+
+            if (gameState.game_status.includes('_won') || gameState.game_status === 'draw') {
+                banner.innerText = gameState.game_status === 'draw' ? "Round ended in full draw match stagnation." : `Victory concluded for ${gameState.game_status === 'p1_won' ? gameState.player1_name : gameState.player2_name}!`;
+                banner.className = "status-banner";
+                startBtn.classList.remove('hidden');
+                startBtn.innerText = "Launch Next Match Round";
+                undoBtn.disabled = true;
+                refreshBoardVisualMarkings();
+                calculateCrossedLines(myBoard);
+                return;
+            }
+
+            let activeSide = (gameState.history.length % 2 === 0) ? 'p1' : 'p2';
+            if (myRole === activeSide) {
+                banner.innerText = "Your Turn! Pick a tile.";
+                banner.className = "status-banner turn";
+            } else {
+                banner.innerText = `Awaiting strategic move from ${activeSide === 'p1' ? gameState.player1_name : gameState.player2_name}...`;
+                banner.className = "status-banner wait";
+            }
+
+            undoBtn.disabled = !(gameState.history.length > 0 && gameState.last_action_by === myRole && !gameState.undo_used_this_turn);
+            
+            refreshBoardVisualMarkings();
+            calculateCrossedLines(myBoard);
+
+            // Execute automated bot calculations if single-player evaluation routes active
+            if(gameMode === 'ai' && activeSide === 'p2' && gameState.game_status === 'playing') {
+                setTimeout(executeComputerAIAction, 700);
+            }
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            myBoard.forEach(num => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.innerText = num;
+                cell.dataset.num = num;
+                cell.addEventListener('click', () => actionCellSelect(num));
+                board.appendChild(cell);
+            });
+        }
+
+        function refreshBoardVisualMarkings() {
+            const history = gameState.history || [];
+            document.querySelectorAll('.cell').forEach(c => {
+                c.classList.toggle('chosen', history.includes(parseInt(c.dataset.num)));
+            });
+        }
+
+        async function actionCellSelect(num) {
+            if (gameState.game_status !== 'playing') return;
+            let activeSide = (gameState.history.length % 2 === 0) ? 'p1' : 'p2';
+            if (myRole !== activeSide) return;
+            if (gameState.history.includes(num)) return;
+
+            processSelectionStep(num);
+        }
+
+        async function processSelectionStep(num) {
+            let updatedHistory = [...gameState.history, num];
+            let evaluationResult = evaluateSimulatedMetrics(updatedHistory);
+
+            if (gameMode === 'ai') {
+                gameState.history = updatedHistory;
+                gameState.game_status = evaluationResult.status;
+                gameState.p1_score += evaluationResult.p1_add;
+                gameState.p2_score += evaluationResult.p2_add;
+                gameState.last_action_by = myRole;
+                gameState.undo_used_this_turn = false;
+                syncLocalArenaUI();
+            } else {
+                await supabaseApp.from('games').update({
+                    history: updatedHistory, last_action_by: myRole, undo_used_this_turn: false,
+                    game_status: evaluationResult.status,
+                    p1_score: (gameState.p1_score || 0) + evaluationResult.p1_add,
+                    p2_score: (gameState.p2_score || 0) + evaluationResult.p2_add
+                }).eq('room_code', currentRoom);
+                gameChannel.send({ type:'broadcast', event:'sync', payload:{} });
+            }
+        }
+
+        /* BRAIN OF THE COMPUTER AI LOGIC ENGINE */
+        function executeComputerAIAction() {
+            const history = gameState.history;
+            let unchosen = Array.from({length: totalCells}, (_, i) => i + 1).filter(n => !history.includes(n));
+            if(unchosen.length === 0) return;
+
+            let diff = document.getElementById('ai-difficulty').value;
+            let chosenNum = unchosen[0]; // Fallback baseline choice initialization
+
+            if (diff === 'easy' || unchosen.length === 1) {
+                chosenNum = unchosen[Math.floor(Math.random() * unchosen.length)];
+            } else {
+                // Medium & Hard modes compute weights based on structural line density arrays
+                let bestScore = -1;
+                unchosen.forEach(num => {
+                    let score = evaluateCellWeightMetrics(num, diff === 'hard');
+                    if(score > bestScore) { bestScore = score; chosenNum = num; }
+                });
+            }
+
+            myRole = 'p2'; // Momentarily assign active role instance flag tracking to permit pipeline processing
+            processSelectionStep(chosenNum);
+            myRole = 'p1'; // Revert context back to player ownership limits safely
+        }
+
+        function evaluateCellWeightMetrics(num, checkOpponentLines) {
+            let totalWeight = 0;
+            
+            // Analyze weights relative to the AI's board orientation grid mapping array
+            let aiIndex = aiBoard.indexOf(num);
+            let aiRow = Math.floor(aiIndex / gridSize);
+            let aiCol = aiIndex % gridSize;
+
+            totalWeight += checkLineWeight(aiBoard.filter((_, i) => Math.floor(i / gridSize) === aiRow));
+            totalWeight += checkLineWeight(aiBoard.filter((_, i) => (i % gridSize) === aiCol));
+            if(aiRow === aiCol) totalWeight += checkLineWeight(aiBoard.filter((_, i) => Math.floor(i / gridSize) === (i % gridSize)));
+            if(aiRow + aiCol === gridSize - 1) totalWeight += checkLineWeight(aiBoard.filter((_, i) => Math.floor(i / gridSize) + (i % gridSize) === gridSize - 1));
+
+            // Hard difficulty cross-evaluates Player 1's layout structure to intercept high-threat victory points
+            if (checkOpponentLines) {
+                let p1Index = myBoard.indexOf(num);
+                let p1Row = Math.floor(p1Index / gridSize);
+                let p1Col = p1Index % gridSize;
+
+                let interceptWeight = 0;
+                interceptWeight += checkLineWeight(myBoard.filter((_, i) => Math.floor(i / gridSize) === p1Row));
+                interceptWeight += checkLineWeight(myBoard.filter((_, i) => (i % gridSize) === p1Col));
+                if(p1Row === p1Col) interceptWeight += checkLineWeight(myBoard.filter((_, i) => Math.floor(i / gridSize) === (i % gridSize)));
+                if(p1Row + p1Col === gridSize - 1) interceptWeight += checkLineWeight(myBoard.filter((_, i) => Math.floor(i / gridSize) + (i % gridSize) === gridSize - 1));
+
+                totalWeight += interceptWeight * 1.2; // Scaling multiplier factors block tracking priority slightly above base attacks
+            }
+
+            return totalWeight;
+        }
+
+        function checkLineWeight(cellArray) {
+            let history = gameState.history;
+            let markedCount = cellArray.filter(n => history.includes(n)).length;
+            if(markedCount === gridSize) return 0; // Already completed line paths lose dynamic tactical execution value
+            return Math.pow(markedCount + 1, 2); // Exponential scaling calculation structure prioritizes paths near completion
+        }
+
+        async function triggerUndoAction() {
+            if (gameState.game_status !== 'playing' || gameState.last_action_by !== myRole || gameState.undo_used_this_turn) return;
+
+            let updatedHistory = [...gameState.history];
+            updatedHistory.pop();
+
+            if (gameMode === 'ai') {
+                gameState.history = updatedHistory;
+                gameState.undo_used_this_turn = true;
+                syncLocalArenaUI();
+            } else {
+                await supabaseApp.from('games').update({ history: updatedHistory, last_action_by: myRole, undo_used_this_turn: true }).eq('room_code', currentRoom);
+                gameChannel.send({ type:'broadcast', event:'sync', payload:{} });
+            }
+        }
+
+        async function startRoundLoop() {
+            myBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            aiBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            renderBoard();
+
+            if (gameMode === 'ai') {
+                gameState.history = [];
+                gameState.game_status = 'playing';
+                gameState.last_action_by = null;
+                gameState.undo_used_this_turn = false;
+                syncLocalArenaUI();
+            } else {
+                await supabaseApp.from('games').update({ game_status: 'playing', history: [], last_action_by: null, undo_used_this_turn: false }).eq('room_code', currentRoom);
+                gameChannel.send({ type:'broadcast', event:'sync', payload:{} });
+            }
+        }
+
+        function calculateCrossedLines(targetLayoutArray) {
+            const history = gameState.history || [];
+            let currentBoardMatrix = [];
+            for (let i = 0; i < gridSize; i++) {
+                currentBoardMatrix.push(targetLayoutArray.slice(i * gridSize, (i + 1) * gridSize).map(n => history.includes(n)));
+            }
+
+            let lines = 0;
+            for (let r = 0; r < gridSize; r++) if (currentBoardMatrix[r].every(v => v)) lines++;
+            for (let c = 0; c < gridSize; c++) if ([...Array(gridSize).keys()].every(r => currentBoardMatrix[r][c])) lines++;
+            if ([...Array(gridSize).keys()].every(i => currentBoardMatrix[i][i])) lines++;
+            if ([...Array(gridSize).keys()].every(i => currentBoardMatrix[i][gridSize - 1 - i])) lines++;
+
+            // Highlight tracking letter components dynamically based on player status checks
+            if(targetLayoutArray === myBoard) {
+                for (let i = 0; i < gridSize; i++) {
+                    const el = document.getElementById(`b-l-${i}`);
+                    if(el) el.classList.toggle('struck', lines > i);
+                }
+            }
+            return lines;
+        }
+
+        function evaluateSimulatedMetrics(simulatedHistory) {
+            // Evaluates local vs AI grids to check if current move satisfies multi-line win conditions ($N$ total lines completed)
+            let oldHistory = gameState.history;
+            gameState.history = simulatedHistory; // Temporarily swap histories to accurately gauge multi-line updates
+
+            let p1Lines = calculateCrossedLines(myBoard);
+            let p2Lines = gameMode === 'ai' ? calculateCrossedLines(aiBoard) : p1Lines; // PvP paths evaluated independently during loop updates
+
+            gameState.history = oldHistory; // Restore default values back safely
+
+            let result = { status: 'playing', p1_add: 0, p2_add: 0 };
+            
+            // Check for wins where total completed lines meets or exceeds the dimension threshold ($N$)
+            let p1Win = p1Lines >= gridSize;
+            let p2Win = p2Lines >= gridSize;
+
+            if (p1Win && p2Win) { result.status = 'draw'; }
+            else if (p1Win) { result.status = 'p1_won'; result.p1_add = 1; }
+            else if (p2Win) { result.status = 'p2_won'; result.p2_add = 1; }
+            else if (simulatedHistory.length === totalCells) { result.status = 'draw'; }
+
+            return result;
+        }
+
+        function adaptGridRangeLabel() {
+            // Utility layout optimization handler updating UI text contexts seamlessly
+            const val = document.getElementById('grid-size').value;
+        }
+    </script>
+</body>
+</html>
