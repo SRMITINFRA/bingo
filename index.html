@@ -6,199 +6,156 @@
     <title>Bingo Royale — Welcome</title>
     <style>
         :root {
-            --bg-dark: #0f172a;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --panel-bg: rgba(30, 41, 59, 0.7);
             --primary: #6366f1;
-            --accent: #ec4899;
-            --neon-glow: rgba(99, 102, 241, 0.4);
+            --accent: #f43f5e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-glass: rgba(255, 255, 255, 0.08);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
 
         body {
-            background: var(--bg-dark);
+            background: var(--bg-gradient);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            perspective: 1000px;
+            padding: 20px;
         }
 
-        /* Ambient Animated Matrix Background Particles */
-        .ambient-bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
-            z-index: 1;
-        }
-
-        .grid-lines {
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            transform: rotateX(60deg) translateY(-30%);
-            animation: gridScroll 20s linear infinite;
-            z-index: 2;
-            opacity: 0.8;
-        }
-
-        @keyframes gridScroll {
-            0% { transform: rotateX(60deg) translateY(0); }
-            100% { transform: rotateX(60deg) translateY(-50px); }
-        }
-
-        /* Cinematic Hero Splash Card */
-        .intro-card {
-            position: relative;
-            z-index: 10;
-            text-align: center;
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
             padding: 40px;
-            animation: cardEntrance 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            opacity: 0;
-            transform: scale(0.9) translateY(30px);
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: center;
         }
 
-        @keyframes cardEntrance {
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        .logo-glow {
-            font-size: 4rem;
-            font-weight: 900;
-            letter-spacing: -2px;
-            text-transform: uppercase;
-            background: linear-gradient(to right, #6366f1, #ec4899, #38bdf8);
-            background-size: 200% auto;
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #6366f1, #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: textShimmer 4s linear infinite, logoPulse 3s ease-in-out infinite alternate;
-            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+            letter-spacing: -1px;
             margin-bottom: 5px;
         }
 
-        @keyframes textShimmer { 0% { background-position: 0% center; } 100% { background: 200% center; } }
-
-        .tagline {
-            font-size: 1.1rem;
-            color: #94a3b8;
+        .subtitle {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
             letter-spacing: 4px;
             text-transform: uppercase;
-            font-weight: 600;
             margin-bottom: 40px;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 0.4s;
         }
 
-        /* Premium Floating Circular Pulse Loader Button */
-        .portal-trigger {
-            width: 130px;
-            height: 130px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 800;
-            cursor: pointer;
-            position: relative;
-            margin: 0 auto;
+        .word-tracker {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 40px;
+        }
+
+        .letter-node {
+            width: 45px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--accent);
+            position: relative;
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.2);
         }
 
-        .portal-ring {
+        .letter-node::after {
+            content: '';
             position: absolute;
+            width: 120%;
+            height: 3px;
+            background: var(--accent);
+            transform: rotate(-30deg);
+        }
+
+        button.btn-premium {
             width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-            animation: ripple 2.5s infinite ease-out;
-            pointer-events: none;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
         }
 
-        @keyframes ripple {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.6); opacity: 0; }
+        button.btn-premium:hover {
+            transform: scale(1.03);
+            box-shadow: 0 12px 24px rgba(99, 102, 241, 0.5);
         }
 
-        .portal-ring-2 { animation-delay: 0.8s; }
-
-        .btn-premium-start:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 35px var(--primary);
-        }
-
-        /* Outro Flash Shutter Effect */
-        .flash-overlay {
+        /* Screen flash transition overlay curtain */
+        #flash-curtain {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             background: #fff;
+            z-index: 10000;
             opacity: 0;
             pointer-events: none;
-            z-index: 10000;
-            transition: opacity 0.5s ease-out;
+            transition: opacity 0.3s ease-in;
         }
-        .flash-all-out { animation: flashExit 0.6s forwards; }
-        @keyframes flash { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div class="top-status-bar" style="height:30px;"></div>
+    <div class="glass-panel">
+        <h1 class="main-title">BINGO</h1>
+        <div class="subtitle">Royale Edition</div>
 
-    <div id="setup-panel" class="glass-panel" style="text-align: center; margin-top: auto; margin-bottom: auto;">
-        <h1 class="main-title" style="font-size: 3.2rem; margin-bottom: 10px;">BINGO</h1>
-        <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); letter-spacing: 4px; margin-bottom: 40px; text-transform: uppercase;">Royale Edition</div>
-
-        <div class="word-tracker" style="margin-bottom: 40px;">
-            <div class="letter-node struck">B</div>
-            <div class="letter-node struck">I</div>
-            <div class="letter-node struck">N</div>
-            <div class="letter-node struck">G</div>
-            <div class="letter-node struck">O</div>
+        <div class="word-tracker">
+            <div class="letter-node">B</div>
+            <div class="letter-node">I</div>
+            <div class="letter-node">N</div>
+            <div class="letter-node">G</div>
+            <div class="letter-node">O</div>
         </div>
 
-        <div style="position: relative; display: inline-block; margin-bottom: 20px;">
-            <div class="radio-tab active" style="border-radius: 50%; width: 140px; height: 14px; display: none;"></div>
-            <button class="btn-premium" style="width: auto; padding: 20px 40px; border-radius: 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px;" onclick="enterBattleArenaWithTransition()">
-                PLAY GAME
-            </button>
-        </div>
+        <button class="btn-premium" onclick="enterBattleArenaWithTransition()">
+            Play Game
+        </button>
     </div>
 
-    <div id="flash-curtain" class="local-video-pip hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; border-radius:0; background:#fff; z-index:10000; opacity:0; pointer-events:none;"></div>
+    <div id="flash-curtain"></div>
 
     <script>
-        function enterBattleArena() {
-            // Read incoming browser arguments to forward room parameters cleanly
-            const currentParams = window.location.search;
-            document.body.style.transition = "opacity 0.4s ease";
-            document.body.style.opacity = "0";
-            
-            setTimeout(() => {
-                window.location.href = `bingo.html${currentMainQueryArgs()}`;
-            }, 400);
-        }
-
-        function initiateGameEngine() {
+        function enterBattleArenaWithTransition() {
             const curtain = document.getElementById('flash-curtain');
-            curtain.classList.remove('hidden');
             curtain.style.opacity = "1";
-            curtain.style.transition = "opacity 0.3s ease-in";
 
             setTimeout(() => {
+                // Read current link search parameters to pass them over seamlessly to live.html
                 const searchParams = window.location.search;
                 window.location.href = `./live.html${searchParams}`;
-            }, 350);
+            }, 300);
         }
     </script>
 </body>
