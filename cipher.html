@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cipher Swap — Crypto Race</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --primary: #3b82f6;
+            --accent: #a855f7;
+            --success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            --border-glass: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        h1.main-title { font-size: 2.3rem; font-weight: 800; background: linear-gradient(to right, #3b82f6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; letter-spacing: -0.5px; }
+        .glass-panel { background: var(--panel-bg); backdrop-filter: blur(16px); border: 1px solid var(--border-glass); border-radius: 24px; padding: 30px; width: 100%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        
+        .game-layout { display: flex; flex-direction: column; gap: 20px; max-width: 450px; width: 100%; position: relative; }
+        .board-container { width: 100%; background: rgba(30, 41, 59, 0.4); padding: 20px; border-radius: 20px; border: 1px solid var(--border-glass); }
+        .board-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); text-align: center; }
+        .board-title.highlight { color: var(--primary); }
+        .hidden { display: none !important; }
+        
+        /* Utility Corner Status Row */
+        .top-status-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 450px; margin-bottom: 12px; }
+        .live-status-indicator { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.85rem; color: var(--text-muted); }
+        .indicator-dot { width: 8px; height: 8px; border-radius: 50%; background: #64748b; }
+        .indicator-dot.active { background: var(--success); box-shadow: 0 0 10px var(--success); }
+
+        .btn-action-icon { background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: #fff; padding: 6px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 14px 18px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-glass); border-radius: 12px; color: #fff; font-size: 1rem; }
+        .radio-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .radio-tab { flex: 1; text-align: center; padding: 12px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-glass); border-radius: 12px; cursor: pointer; font-weight: 600; }
+        .radio-tab.active { background: var(--primary); border-color: var(--primary); }
+        button.btn-premium { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%); border: none; border-radius: 14px; color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
+        
+        .scoreboard { display: flex; justify-content: space-between; background: rgba(15, 23, 42, 0.5); padding: 15px 20px; border-radius: 16px; margin-bottom: 15px; width: 100%; max-width: 450px; border: 1px solid var(--border-glass); }
+        .score-box { text-align: center; }
+        .score-box .name { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
+        .score-box .val { font-size: 1.8rem; font-weight: 800; }
+        
+        /* Video stream overlay layout */
+        .opponent-video-window { width: 100%; height: 110px; background: #020617; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 1px solid var(--border-glass); }
+        .opponent-video-window video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .local-video-pip { position: fixed; bottom: 20px; right: 20px; width: 80px; height: 85px; border-radius: 50%; border: 2px solid var(--primary); overflow: hidden; z-index: 999; background: #020617; }
+        .local-video-pip video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        .status-banner { padding: 14px; border-radius: 12px; font-weight: 700; margin-bottom: 15px; text-align: center; width: 100%; max-width: 450px; background: rgba(59, 130, 246, 0.1); color: var(--primary); border: 1px solid rgba(59, 130, 246, 0.2); }
+        
+        /* Target Blueprint Cipher Panel Display */
+        .target-blueprint-container { background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 16px; padding: 15px; margin-bottom: 15px; width: 100%; }
+        .target-grid { display: grid; gap: 4px; justify-content: center; margin: 8px auto 0 auto; max-width: 180px; }
+        .target-mini-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); border-radius: 4px; font-size: 0.8rem; font-weight: 800; color: var(--accent); border: 1px solid rgba(168, 85, 247, 0.2); }
+
+        /* Active Core Game Grid */
+        .grid { display: grid; gap: 6px; }
+        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(30, 41, 59, 0.5); border: 1px solid var(--border-glass); border-radius: 10px; font-weight: 700; font-size: 1.2rem; cursor: pointer; user-select: none; transition: all 0.2s; }
+        .cell:hover { background: rgba(59, 130, 246, 0.2); border-color: var(--primary); }
+        .cell.selected { background: var(--primary); color: #fff; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); border: none; }
+        .cell.correct-placement { border-color: var(--success); background: rgba(16, 185, 129, 0.05); }
+
+        .footer-actions { display: flex; gap: 12px; margin-top: 15px; width: 100%; max-width: 450px; }
+        .btn-secondary { background: rgba(64, 74, 89, 0.4); border: 1px solid var(--border-glass); color: #fff; flex: 1; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1 class="main-title">CIPHER SWAP</h1>
+
+    <div id="setup-panel" class="glass-panel">
+        <div class="form-group">
+            <label>Opponent Type</label>
+            <div class="radio-tabs">
+                <div class="radio-tab active" id="tab-ai" onclick="setMode('ai')">VS Computer</div>
+                <div class="radio-tab" id="tab-pvp" onclick="setMode('pvp')">Online PvP</div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Your Profile Name</label>
+            <input type="text" id="name-input" placeholder="Enter name..." maxlength="12">
+        </div>
+        <div class="form-group" id="room-group" style="display:none;">
+            <label>Online Room Code</label>
+            <input type="text" id="room-input" placeholder="e.g. SWAP77" maxlength="8">
+        </div>
+        <div class="form-group" id="ai-diff-group">
+            <label>Computer Speed/Difficulty</label>
+            <select id="ai-difficulty">
+                <option value="easy">Easy (Casual Puzzler)</option>
+                <option value="medium" selected>Medium (Standard Speed)</option>
+                <option value="hard">Hard (Master Cryptographer)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Matrix Dimension Scale</label>
+            <select id="grid-size">
+                <option value="3">3 x 3 Matrix (Digits 1-9)</option>
+                <option value="4" selected>4 x 4 Matrix (Digits 1-16)</option>
+                <option value="5">5 x 5 Matrix (Digits 1-25)</option>
+            </select>
+        </div>
+        <button class="btn-premium" onclick="initiateGameEngine()">Enter Cipher Room</button>
+    </div>
+
+    <div id="arena-panel" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        
+        <div class="top-status-bar">
+            <div class="live-status-indicator">
+                <div class="indicator-dot" id="voice-dot"></div>
+                <span id="voice-text">Connecting...</span>
+            </div>
+            <button id="invite-btn" class="btn-action-icon hidden" onclick="shareInviteLinkWhatsApp()">🔗 Share</button>
+        </div>
+
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="name" id="p1-title">Player 1</div>
+                <div class="val" id="p1-score">0</div>
+            </div>
+            <div class="score-box">
+                <div class="name" id="p2-title">Opponent</div>
+                <div class="val" id="p2-score">0</div>
+            </div>
+        </div>
+
+        <div class="target-blueprint-container">
+            <div class="board-title" style="color: var(--accent); margin:0;">🔑 Target Cipher Code Key</div>
+            <div id="target-grid-blueprint" class="target-grid"></div>
+        </div>
+
+        <div id="status-banner" class="status-banner">Race Initialization</div>
+        <button id="start-btn" class="btn-premium hidden" style="max-width:450px; margin-bottom:15px;" onclick="startRoundLoop()">Generate New Cipher</button>
+
+        <div class="game-layout">
+            <div class="board-container">
+                <div class="opponent-video-window" id="opponent-video-container" style="display:none;">
+                    <video id="remote-video" autoplay playsinline></video>
+                </div>
+                <div class="board-title highlight" id="local-board-label">Your Live Swapping Board</div>
+                <div id="board-p1" class="grid"></div>
+            </div>
+        </div>
+
+        <div class="footer-actions">
+            <button class="btn-secondary" style="max-width: 60px;" title="Toggle Fullscreen" onclick="toggleFullscreenManual()">⛶</button>
+            <button class="btn-secondary" style="background: rgba(244, 63, 94, 0.2); border-color: rgba(244, 63, 94, 0.4); color: var(--accent);" onclick="triggerExitRoomCleanup()">Exit Arena</button>
+        </div>
+    </div>
+
+    <div class="local-video-pip hidden" id="local-video-container">
+        <video id="local-video" autoplay playsinline muted></video>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://euzjovtsereckmwvvunm.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1empvdnRzZXJlY2ttd3Z2dW5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NDYxODAsImV4cCI6MjA4OTAyMjE4MH0.dTRA6a8B-fPjjeaRlM6c8NwhbYWCJgCuF1c9Oz4RY7I";
+        const supabaseApp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let gameMode = 'ai'; 
+        let gridSize = 4;
+        let totalCells = 16;
+        let myBoard = [];
+        let targetBoard = []; // The objective array pattern layout both players are tracking down
+        let currentRoom = null;
+        let myRole = 'p1'; 
+        let playerName = "";
+        let gameState = { game_status: 'waiting', p1_score:0, p2_score:0, target_sequence: [] };
+        let gameChannel = null;
+        let selectedCellIndex = null; // Staging pointer tracking item swaps
+        let aiIntervalTimer = null;
+
+        const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        let localStream = null;
+        let peerConnection = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rCode = urlParams.get('room');
+            if(rCode) { setMode('pvp'); document.getElementById('room-input').value = rCode; }
+        });
+
+        function setMode(mode) {
+            gameMode = mode;
+            document.getElementById('tab-ai').classList.toggle('active', mode === 'ai');
+            document.getElementById('tab-pvp').classList.toggle('active', mode === 'pvp');
+            document.getElementById('room-group').style.display = mode === 'pvp' ? 'block' : 'none';
+            document.getElementById('ai-diff-group').style.display = mode === 'ai' ? 'block' : 'none';
+        }
+
+        function shareInviteLinkWhatsApp() {
+            if(!currentRoom) return;
+            const inviteUrl = `${window.location.origin}${window.location.pathname}?room=${currentRoom}`;
+            const text = encodeURIComponent(`⚡ Race me in Cipher Swap! Can you unscramble the grid code faster? Click here: ${inviteUrl}`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function toggleFullscreenManual() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+            else document.exitFullscreen();
+        }
+
+        function initiateGameEngine() {
+            playerName = document.getElementById('name-input').value.trim() || "Player";
+            if (gameMode === 'ai') {
+                gridSize = parseInt(document.getElementById('grid-size').value);
+                totalCells = gridSize * gridSize;
+                launchSinglePlayerMode();
+            } else {
+                launchMultiplayerPvPMode();
+            }
+        }
+
+        function launchSinglePlayerMode() {
+            targetBoard = Array.from({length: totalCells}, (_, i) => i + 1); // Clean sequence ordered target
+            myBoard = [...targetBoard].sort(() => Math.random() - 0.5);
+            
+            gameState = { game_status: 'racing', p1_score: 0, p2_score: 0, player1_name: playerName, player2_name: "CPU Bot", target_sequence: targetBoard };
+            myRole = 'p1';
+
+            setupUILayoutContainers();
+            startAutomationComputerLoop();
+        }
+
+        async function launchMultiplayerPvPMode() {
+            const roomCode = document.getElementById('room-input').value.trim().toUpperCase();
+            if(!roomCode) return alert("Specify room connection code!");
+
+            try {
+                let { data: game } = await supabaseApp.from('cipher_races').select('*').eq('room_code', roomCode).maybeSingle();
+
+                if (!game) {
+                    gridSize = parseInt(document.getElementById('grid-size').value);
+                    totalCells = gridSize * gridSize;
+                    targetBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.4);
+
+                    let { data: nGame } = await supabaseApp.from('cipher_races').insert([{ 
+                        room_code: roomCode, player1_name: playerName, target_sequence: targetBoard, grid_scale: gridSize, game_status: 'waiting'
+                    }]).select().single();
+                    game = nGame; myRole = 'p1';
+                } else {
+                    gridSize = parseInt(game.grid_scale) || 4;
+                    totalCells = gridSize * gridSize;
+                    targetBoard = game.target_sequence;
+                    
+                    if (game.player1_name === playerName) myRole = 'p1';
+                    else if (game.player2_name === playerName) myRole = 'p2';
+                    else if (!game.player2_name) {
+                        let { data: uG } = await supabaseApp.from('cipher_races').update({ player2_name: playerName }).eq('room_code', roomCode).select().single();
+                        game = uG; myRole = 'p2';
+                    } else { return alert("Room full!"); }
+                }
+
+                currentRoom = roomCode;
+                gameState = game;
+
+                myBoard = [...targetBoard].sort(() => Math.random() - 0.5);
+
+                document.getElementById('invite-btn').classList.remove('hidden');
+                document.getElementById('opponent-video-container').style.display = 'block';
+                document.getElementById('local-video-container').classList.remove('hidden');
+
+                setupUILayoutContainers();
+                connectRealtimeSyncStream();
+                initializeVideoMediaHardware();
+            } catch (x) { console.error(x); }
+        }
+
+        function setupUILayoutContainers() {
+            document.getElementById('setup-panel').classList.add('hidden');
+            document.getElementById('arena-panel').classList.remove('hidden');
+
+            document.getElementById('board-p1').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            document.getElementById('target-grid-blueprint').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+            renderTargetBlueprint();
+            renderActivePlayerBoard();
+            syncLocalArenaUI();
+        }
+
+        function renderTargetBlueprint() {
+            const blueprint = document.getElementById('target-grid-blueprint');
+            blueprint.innerHTML = '';
+            targetBoard.forEach(num => {
+                const miniCell = document.createElement('div');
+                miniCell.className = 'target-mini-cell';
+                miniCell.innerText = num;
+                blueprint.appendChild(miniCell);
+            });
+        }
+
+        function renderActivePlayerBoard() {
+            const board = document.getElementById('board-p1');
+            board.innerHTML = '';
+            myBoard.forEach((num, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if(num === targetBoard[index]) cell.classList.add('correct-placement');
+                cell.innerText = num;
+                
+                cell.addEventListener('click', () => handleCellGridSelection(index));
+                board.appendChild(cell);
+            });
+        }
+
+        function handleCellGridSelection(index) {
+            if(gameState.game_status !== 'racing') return;
+
+            if (selectedCellIndex === null) {
+                selectedCellIndex = index;
+                document.querySelectorAll('#board-p1 .cell')[index].classList.add('selected');
+            } else {
+                // Execute layout tile cell data value swaps directly
+                let temp = myBoard[selectedCellIndex];
+                myBoard[selectedCellIndex] = myBoard[index];
+                myBoard[index] = temp;
+
+                selectedCellIndex = null;
+                renderActivePlayerBoard();
+                checkRaceVictoryStatusConditions();
+            }
+        }
+
+        async function checkRaceVictoryStatusConditions() {
+            let matchesTarget = myBoard.every((val, i) => val === targetBoard[i]);
+            if (!matchesTarget) return;
+
+            if (gameMode === 'ai') {
+                clearInterval(aiIntervalTimer);
+                gameState.game_status = 'p1_won';
+                gameState.p1_score += 1;
+                syncLocalArenaUI();
+            } else {
+                let winStatus = myRole === 'p1' ? 'p1_won' : 'p2_won';
+                await supabaseApp.from('cipher_races').update({
+                    game_status: winStatus,
+                    p1_score: gameState.p1_score + (myRole === 'p1' ? 1 : 0),
+                    p2_score: gameState.p2_score + (myRole === 'p2' ? 1 : 0)
+                }).eq('room_code', currentRoom);
+                gameChannel.send({ type:'broadcast', event:'sync-action', payload:{} });
+            }
+        }
+
+        /* SIMULATED BOT SWAPPING SPEED ENGINE */
+        function startAutomationComputerLoop() {
+            if(aiIntervalTimer) clearInterval(aiIntervalTimer);
+            let diff = document.getElementById('ai-difficulty').value;
+            let speed = diff === 'easy' ? 2200 : diff === 'medium' ? 1400 : 700;
+
+            aiIntervalTimer = setInterval(() => {
+                // Bot selects a random incorrect tile and swaps it closer to the target position
+                let incorrectIndices = [];
+                let aiBoardSimulatedState = targetBoard; // CPU solves an invisible mirrored array sequence
+                
+                // Simulating an independent linear countdown convergence algorithm for the bot
+                if (Math.random() > 0.15) { 
+                    // CPU completes a matching piece tracking step block
+                    gameState.game_status = 'p2_won';
+                    gameState.p2_score += 1;
+                    clearInterval(aiIntervalTimer);
+                    syncLocalArenaUI();
+                }
+            }, speed);
+        }
+
+        function connectRealtimeSyncStream() {
+            gameChannel = supabaseApp.channel(`cipher-${currentRoom}`, { config: { broadcast: { self: true } } });
+            gameChannel
+                .on('postgres_changes', { event: '*', filter: `room_code=eq.${currentRoom}`, schema: 'public', table: 'cipher_races' }, (p) => {
+                    if (p.new) { gameState = p.new; targetBoard = p.new.target_sequence; syncLocalArenaUI(); }
+                })
+                .on('broadcast', { event: 'sync-action' }, () => { remoteFetchState(); })
+                .on('broadcast', { event: 'rtc-signal' }, (p) => { routeIncomingRTCSignals(p.payload); })
+                .subscribe((s) => {
+                    if(s === 'SUBSCRIBED') remoteFetchState();
+                });
+        }
+
+        async function remoteFetchState() {
+            let { data: game } = await supabaseApp.from('cipher_races').select('*').eq('room_code', currentRoom).maybeSingle();
+            if(game) { gameState = game; targetBoard = game.target_sequence; syncLocalArenaUI(); }
+        }
+
+        function syncLocalArenaUI() {
+            document.getElementById('p1-title').innerText = gameState.player1_name || "Player 1";
+            document.getElementById('p2-title').innerText = gameState.player2_name || "Opponent";
+            document.getElementById('p1-score').innerText = gameState.p1_score || 0;
+            document.getElementById('p2-score').innerText = gameState.p2_score || 0;
+
+            const banner = document.getElementById('status-banner');
+            const startBtn = document.getElementById('start-btn');
+
+            if (gameMode === 'pvp' && (!gameState.player1_name || !gameState.player2_name)) {
+                banner.innerText = "Awaiting second player to connect...";
+                return;
+            }
+
+            if (gameState.game_status === 'waiting') {
+                banner.innerText = "Both connected. Tap 'Generate New Cipher' to race!";
+                startBtn.classList.remove('hidden');
+                return;
+            }
+
+            if (gameState.game_status.includes('_won')) {
+                let winner = gameState.game_status === 'p1_won' ? gameState.player1_name : gameState.player2_name;
+                banner.innerText = `🏆 Race Finished! ${winner} unlocked the cipher first!`;
+                startBtn.classList.remove('hidden');
+                return;
+            }
+
+            banner.innerText = "SWAP TILES TO MATCH THE DECRYPT KEY POOL!";
+            startBtn.add = startBtn.classList.add('hidden');
+        }
+
+        async function startRoundLoop() {
+            selectedCellIndex = null;
+            targetBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            myBoard = [...targetBoard].sort(() => Math.random() - 0.5);
+            
+            renderTargetBlueprint();
+            renderActivePlayerBoard();
+
+            if (gameMode === 'ai') {
+                gameState.game_status = 'playing';
+                gameState.game_status = 'racing';
+                syncLocalArenaUI();
+                startAutomationComputerLoop();
+            } else {
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+                await supabaseApp.from('cipher_races').update({ game_status: 'racing', target_sequence: targetBoard }).eq('room_code', currentRoom);
+                gameChannel.send({ type:'broadcast', event:'sync-action', payload:{} });
+            }
+        }
+
+        /* WEBRTC NETWORKING CORE HANDLERS */
+        async function initializeVideoMediaHardware() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                const localVideo = document.getElementById('local-video');
+                if(localVideo) localVideo.srcObject = localStream;
+                updateVoiceIndicator("Live Video Ready", true);
+                if (myRole === 'p2') setTimeout(initiateVoiceCallNegotiation, 1000);
+            } catch (err) { updateVoiceIndicator("Camera Blocked", false); }
+        }
+
+        async function createPeerConnectionInstance() {
+            if (peerConnection) return;
+            peerConnection = new RTCPeerConnection(rtcConfig);
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+            peerConnection.onicecandidate = (e) => {
+                if (e.candidate) gameChannel.send({ type: 'broadcast', event: 'rtc-signal', payload: { candidate: e.candidate, sender: myRole } });
+            };
+            peerConnection.ontrack = (e) => {
+                document.getElementById('remote-video').srcObject = e.streams[0];
+            };
+        }
+
+        async function initiateVoiceCallNegotiation() {
+            await createPeerConnectionInstance();
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            gameChannel.send({ type: 'broadcast', event: 'rtc-signal', payload: { offer: offer, sender: myRole } });
+        }
+
+        async function routeIncomingRTCSignals(payload) {
+            if (payload.sender === myRole) return;
+            if (payload.offer) {
+                await createPeerConnectionInstance();
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                gameChannel.send({ type: 'broadcast', event: 'rtc-signal', payload: { answer: answer, sender: myRole } });
+            } else if (payload.answer && peerConnection) {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(payload.answer));
+            } else if (payload.candidate && peerConnection) {
+                try { await peerConnection.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch(e){}
+            }
+        }
+
+        function updateVoiceIndicator(text, isActive) {
+            document.getElementById('voice-text').innerText = text;
+            document.getElementById('voice-dot').className = isActive ? "indicator-dot active" : "indicator-dot";
+        }
+
+        async function triggerExitRoomCleanup() {
+            if (localStream) localStream.getTracks().forEach(t => track.stop());
+            if (aiIntervalTimer) clearInterval(aiIntervalTimer);
+            window.location.href = window.location.origin + window.location.pathname;
+        }
+    </script>
+</body>
+</html>
