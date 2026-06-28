@@ -211,13 +211,23 @@
             calculateCompletedLines();
         }
 
-        async function startGameRound() {
-            await supabaseApp.from('games').update({
-                game_status: 'playing',
-                history: [],
-                last_action_by: null,
-                undo_used_this_turn: false
-            }).eq('room_code', currentRoom);
+       async function startGameRound() {
+            try {
+                // Force reset all parameters securely with proper data type defaults
+                const { error } = await supabaseApp.from('games').update({
+                    game_status: 'playing',
+                    history: [], // Ensure it explicitly sends an empty array structure
+                    last_action_by: null,
+                    undo_used_this_turn: false
+                }).eq('room_code', currentRoom);
+
+                if (error) {
+                    console.error("Error starting game from Supabase:", error);
+                    alert("Could not start game: " + error.message);
+                }
+            } catch (err) {
+                console.error("Unexpected handler exception:", err);
+            }
         }
 
         function renderBoard() {
