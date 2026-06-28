@@ -1,14 +1,13 @@
-const CACHE_NAME = 'bingo-royale-v3';
+const CACHE_NAME = 'bingo-royale-v4';
 const ASSETS = [
-  './',
-  './index.html',
-  './live.html',
-  './manifest.json',
-  './icon192.png',
-  './icon512.png'
+  '/',
+  '/index.html',
+  '/live.html',
+  '/manifest.json',
+  '/icon192.png',
+  '/icon512.png'
 ];
 
-// Install stage - cache local static files only
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -18,22 +17,32 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(self.clients.claim());
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
-// Media-safe Fetch Handler
 self.addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
-
-  // CRITICAL: Completely bypass external requests (Supabase, WebRTC signaling, TURN traffic)
-  if (url.origin !== location.origin) {
-    return; // Let the browser handle it normally over the direct network
+  // CRITICAL: Force bypass on any WebRTC signaling, Supabase sockets, or STUN/TURN relays
+  if (e.request.url.startsWith('http') === false || e.request.method !== 'GET') {
+    return;
   }
 
-  // Only handle local static asset caching
+  const url = new URL(e.request.url);
+  if (url.origin !== location.origin) {
+    return; // Bypass completely out to native network
+  }
+
   e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
+    caches.match(e.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+      return fetch(e.request);
     })
   );
 });
