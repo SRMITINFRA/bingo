@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo Royale — Welcome</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#6366f1">
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
@@ -105,6 +107,7 @@
             cursor: pointer;
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
             transition: all 0.3s ease;
+            margin-bottom: 12px;
         }
 
         button.btn-premium:hover {
@@ -112,7 +115,23 @@
             box-shadow: 0 12px 24px rgba(99, 102, 241, 0.5);
         }
 
-        /* Screen flash transition overlay curtain */
+        button.btn-install {
+            background: transparent;
+            border: 1px solid var(--border-glass);
+            color: var(--text-muted);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        button.btn-install:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+
         #flash-curtain {
             position: fixed;
             top: 0; left: 0;
@@ -142,17 +161,55 @@
         <button class="btn-premium" onclick="enterBattleArenaWithTransition()">
             Play Game
         </button>
+
+        <button id="pwa-install-btn" class="btn-install hidden" onclick="triggerPWAInstallation()">
+            📥 Install App
+        </button>
     </div>
 
     <div id="flash-curtain"></div>
 
     <script>
+        let deferredPrompt = null;
+
+        // 1. Register Service Worker securely
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+
+        // 2. Intercept native browser installation prompts
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); // Stop default small mini-infobar prompt banner
+            deferredPrompt = e;  // Store event pointer reference
+            
+            // Show the custom install option button element natively
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+
+        // 3. Execution function triggered by custom install option button clicks
+        function triggerPWAInstallation() {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt(); // Open default device home screen overlay dialog
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User confirmed installation!');
+                }
+                deferredPrompt = null; // Flush capture stream token safely
+                document.getElementById('pwa-install-btn').classList.add('hidden');
+            });
+        }
+
         function enterBattleArenaWithTransition() {
             const curtain = document.getElementById('flash-curtain');
             curtain.style.opacity = "1";
 
             setTimeout(() => {
-                // Read current link search parameters to pass them over seamlessly to live.html
                 const searchParams = window.location.search;
                 window.location.href = `./live.html${searchParams}`;
             }, 300);
