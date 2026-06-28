@@ -52,7 +52,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
 
-        /* Responsive Layout for Visualizing Both Boards Side-by-Side */
         .game-layout {
             display: flex;
             gap: 30px;
@@ -84,8 +83,7 @@
 
         .hidden { display: none !important; }
 
-        /* Form Controls */
-        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group { margin-bottom: 20px; text-align: text-align: left; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         
         input, select {
@@ -116,7 +114,6 @@
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
         }
 
-        /* Game Elements */
         .scoreboard { display: flex; justify-content: space-between; background: rgba(15, 23, 42, 0.5); padding: 15px 20px; border-radius: 16px; margin-bottom: 20px; width: 100%; max-width: 500px; border: 1px solid var(--border-glass); }
         .score-box { text-align: center; }
         .score-box .name { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
@@ -131,7 +128,6 @@
         .letter-node.struck { color: var(--accent); background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.4); }
         .letter-node.struck::after { content: ''; position: absolute; width: 120%; height: 2px; background: var(--accent); transform: rotate(-30deg); }
 
-        /* Grids */
         .grid { display: grid; gap: 6px; }
         .cell {
             aspect-ratio: 1;
@@ -150,7 +146,6 @@
         .cell:hover:not(.chosen) { background: var(--primary); color: white; }
         .cell.chosen { background: linear-gradient(135deg, var(--accent) 0%, #be123c 100%); color: white; cursor: not-allowed; border: none; }
         
-        /* Spectator View for Opponent Board */
         .cell.opponent-view { cursor: not-allowed; }
         .cell.opponent-view:hover { background: rgba(30, 41, 59, 0.5); color: inherit; }
 
@@ -163,7 +158,6 @@
 
     <h1 class="main-title">BINGO ROYALE</h1>
 
-    <!-- SETUP INPUT PANEL -->
     <div id="setup-panel" class="glass-panel">
         <div class="form-group">
             <label>Opponent Type</label>
@@ -206,7 +200,6 @@
         <button class="btn-premium" onclick="initiateGameEngine()">Enter Battle Arena</button>
     </div>
 
-    <!-- MAIN ACTIVE GAME INTERFACE -->
     <div id="arena-panel" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
         <div class="scoreboard">
             <div class="score-box">
@@ -222,16 +215,13 @@
         <div id="status-banner" class="status-banner turn">Your Turn</div>
         <button id="start-btn" class="btn-premium hidden" style="max-width:500px; margin-bottom:20px;" onclick="startRoundLoop()">Start Round</button>
 
-        <!-- SPLIT ARENA RESPONSIVE DUAL GRID AREA -->
         <div class="game-layout">
-            <!-- LEFT CONTAINER: MY LIVE BOARD -->
             <div class="board-container">
                 <div class="board-title active-user" id="local-board-label">Your Board</div>
                 <div class="word-tracker" id="word-container-p1"></div>
                 <div id="board-p1" class="grid"></div>
             </div>
 
-            <!-- RIGHT CONTAINER: OPPONENT / COMPUTER BOARD -->
             <div class="board-container" id="opponent-panel">
                 <div class="board-title" id="remote-board-label">Opponent Board</div>
                 <div class="word-tracker" id="word-container-p2"></div>
@@ -245,6 +235,12 @@
     </div>
 
     <script>
+        // --- CRITICAL FIXED SUPABASE INITIALIZATION BLOCK ---
+        const SUPABASE_URL = "https://euzjovtsereckmwvvunm.supabase.co"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1empvdnRzZXJlY2ttd3Z2dW5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NDYxODAsImV4cCI6MjA4OTAyMjE4MH0.dTRA6a8B-fPjjeaRlM6c8NwhbYWCJgCuF1c9Oz4RY7I";
+        const supabaseApp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // ---------------------------------------------------
+
         let gameMode = 'ai'; 
         let gridSize = 5;
         let totalCells = 25;
@@ -303,7 +299,6 @@
                 let { data: game } = await supabaseApp.from('games').select('*').eq('room_code', roomCode).maybeSingle();
 
                 if (!game) {
-                    // Player 1 sets the grid scale explicitly
                     gridSize = parseInt(document.getElementById('grid-size').value);
                     totalCells = gridSize * gridSize;
 
@@ -312,7 +307,6 @@
                     }]).select().single();
                     game = nGame; myRole = 'p1';
                 } else {
-                    // Player 2 FORCED into the host's grid size selection setup
                     gridSize = parseInt(game.grid_scale) || 5;
                     totalCells = gridSize * gridSize;
                     
@@ -327,7 +321,6 @@
                 currentRoom = roomCode;
                 gameState = game;
 
-                // Sync layout setups across random client configuration reloads
                 const boardKey = `bingo_board_${roomCode}`;
                 if(localStorage.getItem(boardKey)) {
                     myBoard = JSON.parse(localStorage.getItem(boardKey));
@@ -351,7 +344,6 @@
             buildWordHeaders('word-container-p1');
             buildWordHeaders('word-container-p2');
 
-            // Hide opponent board display container *only* if playing blind online multiplayer PvP mode
             if(gameMode === 'pvp') {
                 document.getElementById('opponent-panel').classList.add('hidden');
             } else {
@@ -443,7 +435,6 @@
         }
 
         function renderBoards() {
-            // Render local user board mapping
             const boardP1 = document.getElementById('board-p1');
             boardP1.innerHTML = '';
             myBoard.forEach(num => {
@@ -455,7 +446,6 @@
                 boardP1.appendChild(cell);
             });
 
-            // Render right side display view container layout if computer player tracking active
             const boardP2 = document.getElementById('board-p2');
             boardP2.innerHTML = '';
             opponentBoard.forEach(num => {
@@ -584,7 +574,7 @@
             if(gameMode === 'ai') opponentBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
             
             if(gameMode === 'pvp') {
-                localStorage.setItem(`bingo_board_${currentRoom}`, JSON.stringify(myBoard));
+                localStorage.setItem(`b_board_${currentRoom}`, JSON.stringify(myBoard));
             }
 
             renderBoards();
