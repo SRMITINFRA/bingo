@@ -3,364 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Realtime 1v1 BINGO</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Bingo Royale — Welcome</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
-        .setup-container, .game-container { max-width: 450px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .hidden { display: none; }
-        
-        .bingo-header { display: flex; justify-content: center; gap: 10px; margin: 15px 0; font-size: 2.5rem; font-weight: 900; letter-spacing: 5px; }
-        .bingo-letter { position: relative; color: #ccc; transition: color 0.3s ease; }
-        .bingo-letter.struck { color: #e53e3e; }
-        .bingo-letter.struck::after { content: "/"; position: absolute; left: 15%; top: -5px; color: #e53e3e; font-size: 3rem; transform: rotate(15deg); }
+        :root {
+            --bg-dark: #0f172a;
+            --primary: #6366f1;
+            --accent: #ec4899;
+            --neon-glow: rgba(99, 102, 241, 0.4);
+        }
 
-        .scoreboard { display: flex; justify-content: space-between; background: #edf2f7; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
-        .status-banner { background: #3182ce; color: white; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; font-size: 1.1rem; }
-        .status-banner.your-turn { background: #38a169; }
-        .status-banner.waiting { background: #dd6b20; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
 
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
-        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #edf2f7; font-weight: bold; font-size: 1.3rem; cursor: pointer; border-radius: 6px; transition: all 0.2s ease; border: 2px solid transparent; user-select: none; }
-        .cell:hover:not(.chosen) { background: #e2e8f0; }
-        .cell.chosen { background: #e53e3e; color: white; cursor: not-allowed; }
+        body {
+            background: var(--bg-dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1000px;
+        }
 
-        button { padding: 12px 24px; font-size: 1rem; margin: 8px; cursor: pointer; border-radius: 6px; border: none; background: #3182ce; color: white; font-weight: bold; transition: background 0.2s; }
-        button:hover:not(:disabled) { background: #2b6cb0; }
-        button:disabled { background: #cbd5e0; cursor: not-allowed; }
-        input { padding: 12px; font-size: 1rem; width: 75%; border: 2px solid #e2e8f0; border-radius: 6px; text-align: center; margin-bottom: 10px; }
-        input:focus { border-color: #3182ce; outline: none; }
+        /* Ambient Animated Matrix Background Particles */
+        .ambient-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+            z-index: 1;
+        }
+
+        .grid-lines {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: rotateX(60deg) translateY(-30%);
+            animation: gridScroll 20s linear infinite;
+            z-index: 2;
+            opacity: 0.8;
+        }
+
+        @keyframes gridScroll {
+            0% { transform: rotateX(60deg) translateY(0); }
+            100% { transform: rotateX(60deg) translateY(-50px); }
+        }
+
+        /* Cinematic Hero Splash Card */
+        .intro-card {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+            animation: cardEntrance 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform: scale(0.9) translateY(30px);
+        }
+
+        @keyframes cardEntrance {
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .logo-glow {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #6366f1, #ec4899, #38bdf8);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: textShimmer 4s linear infinite, logoPulse 3s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.3));
+            margin-bottom: 5px;
+        }
+
+        @keyframes textShimmer { 0% { background-position: 0% center; } 100% { background: 200% center; } }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 0.4s;
+        }
+
+        /* Premium Floating Circular Pulse Loader Button */
+        .portal-trigger {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 800;
+            cursor: pointer;
+            position: relative;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .portal-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            animation: ripple 2.5s infinite ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        .portal-ring-2 { animation-delay: 0.8s; }
+
+        .btn-premium-start:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 35px var(--primary);
+        }
+
+        /* Outro Flash Shutter Effect */
+        .flash-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10000;
+            transition: opacity 0.5s ease-out;
+        }
+        .flash-all-out { animation: flashExit 0.6s forwards; }
+        @keyframes flash { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <h1>🎉 Realtime 1v1 BINGO</h1>
+    <div class="top-status-bar" style="height:30px;"></div>
 
-    <div id="setup" class="setup-container">
-        <h3>Enter Details to Play</h3>
-        <input type="text" id="name-input" placeholder="Your Name" maxlength="15"><br>
-        <input type="text" id="room-input" placeholder="Room Code (e.g., LUCH7)" maxlength="10">
-        <br><br>
-        <button onclick="joinGame()">Join / Create Game</button>
-    </div>
+    <div id="setup-panel" class="glass-panel" style="text-align: center; margin-top: auto; margin-bottom: auto;">
+        <h1 class="main-title" style="font-size: 3.2rem; margin-bottom: 10px;">BINGO</h1>
+        <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); letter-spacing: 4px; margin-bottom: 40px; text-transform: uppercase;">Royale Edition</div>
 
-    <div id="game" class="game-container hidden">
-        <div class="scoreboard">
-            <div><span id="p1-label">Player 1</span>: <span id="p1-score">0</span></div>
-            <div><span id="p2-label">Player 2</span>: <span id="p2-score">0</span></div>
+        <div class="word-tracker" style="margin-bottom: 40px;">
+            <div class="letter-node struck">B</div>
+            <div class="letter-node struck">I</div>
+            <div class="letter-node struck">N</div>
+            <div class="letter-node struck">G</div>
+            <div class="letter-node struck">O</div>
         </div>
 
-        <div id="role-display" style="font-weight: bold; margin-bottom: 5px; color: #4a5568;">Assigning identity...</div>
-        <div id="status-banner" class="status-banner waiting">Waiting for players...</div>
-
-        <div class="bingo-header">
-            <span class="bingo-letter" id="b-l-0">B</span>
-            <span class="bingo-letter" id="b-l-1">I</span>
-            <span class="bingo-letter" id="b-l-2">N</span>
-            <span class="bingo-letter" id="b-l-3">G</span>
-            <span class="bingo-letter" id="b-l-4">O</span>
-        </div>
-
-        <button id="start-btn" class="hidden" onclick="startGameRound()">Start Game</button>
-        
-        <div id="board" class="grid"></div>
-        
-        <div style="margin-top: 15px;">
-            <button id="undo-btn" onclick="executeUndo()" disabled>Undo Move</button>
+        <div style="position: relative; display: inline-block; margin-bottom: 20px;">
+            <div class="radio-tab active" style="border-radius: 50%; width: 140px; height: 14px; display: none;"></div>
+            <button class="btn-premium" style="width: auto; padding: 20px 40px; border-radius: 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px;" onclick="enterBattleArenaWithTransition()">
+                PLAY GAME
+            </button>
         </div>
     </div>
+
+    <div id="flash-curtain" class="local-video-pip hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; border-radius:0; background:#fff; z-index:10000; opacity:0; pointer-events:none;"></div>
 
     <script>
-        const SUPABASE_URL = "https://euzjovtsereckmwvvunm.supabase.co"; 
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1empvdnRzZXJlY2ttd3Z2dW5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NDYxODAsImV4cCI6MjA4OTAyMjE4MH0.dTRA6a8B-fPjjeaRlM6c8NwhbYWCJgCuF1c9Oz4RY7I";
-        
-        const supabaseApp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let currentRoom = null;
-        let myBoard = [];
-        let myRole = null; 
-        let playerName = "";
-        let gameState = {};
-        let gameChannel = null;
-
-        async function joinGame() {
-            playerName = document.getElementById('name-input').value.trim();
-            const roomCode = document.getElementById('room-input').value.trim().toUpperCase();
-
-            if (!playerName) return alert("Please enter your name!");
-            if (!roomCode) return alert("Please enter a room code!");
-
-            const storageKey = `bingo_board_${roomCode}`;
-            const cachedBoard = localStorage.getItem(storageKey);
-            if (cachedBoard) {
-                myBoard = JSON.parse(cachedBoard);
-            } else {
-                myBoard = Array.from({length: 25}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
-                localStorage.setItem(storageKey, JSON.stringify(myBoard));
-            }
-
-            try {
-                let { data: game } = await supabaseApp.from('games').select('*').eq('room_code', roomCode).maybeSingle();
-
-                if (!game) {
-                    let { data: newGame } = await supabaseApp.from('games').insert([{ room_code: roomCode, player1_name: playerName, history: [] }]).select().single();
-                    game = newGame;
-                    myRole = 'p1';
-                } else {
-                    if (game.player1_name === playerName) {
-                        myRole = 'p1';
-                    } else if (game.player2_name === playerName) {
-                        myRole = 'p2';
-                    } else if (!game.player1_name) {
-                        let { data: updatedGame } = await supabaseApp.from('games').update({ player1_name: playerName }).eq('room_code', roomCode).select().single();
-                        game = updatedGame;
-                        myRole = 'p1';
-                    } else if (!game.player2_name) {
-                        let { data: updatedGame } = await supabaseApp.from('games').update({ player2_name: playerName }).eq('room_code', roomCode).select().single();
-                        game = updatedGame;
-                        myRole = 'p2';
-                    } else {
-                        return alert("Room is full!");
-                    }
-                }
-
-                currentRoom = roomCode;
-                gameState = game;
-
-                document.getElementById('setup').classList.add('hidden');
-                document.getElementById('game').classList.remove('hidden');
-                document.getElementById('role-display').innerText = `Logged in as: ${playerName} (${myRole.toUpperCase()})`;
-
-                renderBoard();
-                listenToRoom();
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function listenToRoom() {
-            // Using a single unified real-time channel for both database changes AND broadcast messages
-            gameChannel = supabaseApp.channel(`room-${currentRoom}`, {
-                config: { broadcast: { self: true } }
-            });
-
-            gameChannel
-                .on('postgres_changes', { event: '*', filter: `room_code=eq.${currentRoom}`, schema: 'public', table: 'games' }, 
-                (payload) => {
-                    gameState = payload.new;
-                    processStateUpdate();
-                })
-                .on('broadcast', { event: 'force-sync' }, (payload) => {
-                    // Instantly fetch the fresh data from db whenever any player triggers a visual event
-                    fetchLatestGameState();
-                })
-                .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') {
-                        // Trigger an initial sync broadcast so the opponent knows we connected
-                        gameChannel.send({ type: 'broadcast', event: 'force-sync', payload: {} });
-                        fetchLatestGameState();
-                    }
-                });
-        }
-
-        async function fetchLatestGameState() {
-            let { data: game } = await supabaseApp.from('games').select('*').eq('room_code', currentRoom).maybeSingle();
-            if (game) {
-                gameState = game;
-                processStateUpdate();
-            }
-        }
-
-        function processStateUpdate() {
-            document.getElementById('p1-score').innerText = gameState.p1_score || 0;
-            document.getElementById('p2-score').innerText = gameState.p2_score || 0;
-            document.getElementById('p1-label').innerText = gameState.player1_name || "Player 1";
-            document.getElementById('p2-label').innerText = gameState.player2_name || "Player 2";
-
-            const banner = document.getElementById('status-banner');
-            const startBtn = document.getElementById('start-btn');
-            const undoBtn = document.getElementById('undo-btn');
-
-            if (!gameState.player1_name || !gameState.player2_name) {
-                banner.innerText = "Waiting for Opponent to Connect...";
-                banner.className = "status-banner waiting";
-                startBtn.classList.add('hidden');
-                return;
-            }
-
-            if (gameState.game_status === 'waiting') {
-                banner.innerText = "Both players connected. Click 'Start Game' to begin!";
-                banner.className = "status-banner waiting";
-                startBtn.classList.remove('hidden'); 
-                undoBtn.disabled = true;
-                return;
-            }
-
-            startBtn.classList.add('hidden');
-
-            if (gameState.game_status.includes('_won') || gameState.game_status === 'draw') {
-                if (gameState.game_status === 'draw') banner.innerText = "Round Ended: It's a Draw!";
-                else {
-                    const winnerName = gameState.game_status === 'p1_won' ? gameState.player1_name : gameState.player2_name;
-                    banner.innerText = "🎉 " + winnerName + " WINS THIS ROUND! 🎉";
-                }
-                banner.className = "status-banner";
-                undoBtn.disabled = true;
-                startBtn.classList.remove('hidden');
-                startBtn.innerText = "Play Next Round";
-                refreshCellVisibilities();
-                calculateCompletedLines();
-                return;
-            }
-
-            // Game turn mapping
-            let historyArray = gameState.history || [];
-            let activePlayer = (historyArray.length % 2 === 0) ? 'p1' : 'p2';
+        function enterBattleArena() {
+            // Read incoming browser arguments to forward room parameters cleanly
+            const currentParams = window.location.search;
+            document.body.style.transition = "opacity 0.4s ease";
+            document.body.style.opacity = "0";
             
-            if (myRole === activePlayer) {
-                banner.innerText = "Your Turn! Select a number.";
-                banner.className = "status-banner your-turn";
-            } else {
-                const activeName = activePlayer === 'p1' ? gameState.player1_name : gameState.player2_name;
-                banner.innerText = "Waiting for " + activeName + " to move...";
-                banner.className = "status-banner waiting";
-            }
-
-            undoBtn.disabled = !(historyArray.length > 0 && gameState.last_action_by === myRole && !gameState.undo_used_this_turn);
-
-            refreshCellVisibilities();
-            calculateCompletedLines();
+            setTimeout(() => {
+                window.location.href = `bingo.html${currentMainQueryArgs()}`;
+            }, 400);
         }
 
-        async function startGameRound() {
-            // Reset the layout mapping storage so that a completely fresh game round shuffles numbers cleanly
-            localStorage.removeItem(`bingo_board_${currentRoom}`);
-            myBoard = Array.from({length: 25}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
-            localStorage.setItem(`bingo_board_${currentRoom}`, JSON.stringify(myBoard));
-            renderBoard();
+        function initiateGameEngine() {
+            const curtain = document.getElementById('flash-curtain');
+            curtain.classList.remove('hidden');
+            curtain.style.opacity = "1";
+            curtain.style.transition = "opacity 0.3s ease-in";
 
-            await supabaseApp.from('games').update({
-                game_status: 'playing',
-                history: [],
-                last_action_by: null,
-                undo_used_this_turn: false
-            }).eq('room_code', currentRoom);
-
-            // Send a real-time broadcast payload to instantly sync both devices
-            gameChannel.send({ type: 'broadcast', event: 'force-sync', payload: {} });
-        }
-
-        function renderBoard() {
-            const boardDiv = document.getElementById('board');
-            boardDiv.innerHTML = '';
-            myBoard.forEach((num) => {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.innerText = num;
-                cell.dataset.num = num;
-                cell.addEventListener('click', () => selectCellNumber(num));
-                boardDiv.appendChild(cell);
-            });
-        }
-
-        function refreshCellVisibilities() {
-            const history = gameState.history || [];
-            document.querySelectorAll('.cell').forEach(cell => {
-                let num = parseInt(cell.dataset.num);
-                if (history.includes(num)) {
-                    cell.classList.add('chosen'); 
-                } else {
-                    cell.classList.remove('chosen');
-                }
-            });
-        }
-
-        async function selectCellNumber(num) {
-            if (gameState.game_status !== 'playing') return;
-            
-            let historyArray = gameState.history || [];
-            let activePlayer = (historyArray.length % 2 === 0) ? 'p1' : 'p2';
-            if (myRole !== activePlayer) return alert("It is not your turn!");
-            if (historyArray.includes(num)) return;
-
-            let updatedHistory = [...historyArray, num];
-            let roundResults = evaluateBoardMetricsForUpdate(updatedHistory);
-
-            await supabaseApp.from('games').update({
-                history: updatedHistory,
-                last_action_by: myRole,
-                undo_used_this_turn: false,
-                game_status: roundResults.status,
-                p1_score: (gameState.p1_score || 0) + roundResults.p1_add,
-                p2_score: (gameState.p2_score || 0) + roundResults.p2_add
-            }).eq('room_code', currentRoom);
-
-            gameChannel.send({ type: 'broadcast', event: 'force-sync', payload: {} });
-        }
-
-        async function executeUndo() {
-            if (gameState.game_status !== 'playing') return;
-            if (gameState.last_action_by !== myRole || gameState.undo_used_this_turn) return alert("Undo unavailable.");
-
-            let updatedHistory = [...(gameState.history || [])];
-            updatedHistory.pop(); 
-
-            await supabaseApp.from('games').update({
-                history: updatedHistory,
-                last_action_by: myRole,
-                undo_used_this_turn: true
-            }).eq('room_code', currentRoom);
-
-            gameChannel.send({ type: 'broadcast', event: 'force-sync', payload: {} });
-        }
-
-        function calculateCompletedLines() {
-            const cells = Array.from(document.querySelectorAll('.cell'));
-            const history = gameState.history || [];
-            
-            let currentBoardMatrix = [];
-            for (let i = 0; i < 5; i++) {
-                currentBoardMatrix.push(cells.slice(i * 5, (i + 1) * 5).map(c => history.includes(parseInt(c.dataset.num))));
-            }
-
-            let lines = 0;
-            for (let r = 0; r < 5; r++) if (currentBoardMatrix[r].every(v => v)) lines++;
-            for (let c = 0; c < 5; c++) if ([0,1,2,3,4].every(r => currentBoardMatrix[r][c])) lines++;
-            if ([0,1,2,3,4].every(i => currentBoardMatrix[i][i])) lines++;
-            if ([0,1,2,3,4].every(i => currentBoardMatrix[i][4 - i])) lines++;
-
-            for (let i = 0; i < 5; i++) {
-                const element = document.getElementById(`b-l-${i}`);
-                if (lines > i) element.classList.add('struck');
-                else element.classList.remove('struck');
-            }
-            return lines;
-        }
-
-        function evaluateBoardMetricsForUpdate(simulatedHistory) {
-            const cells = Array.from(document.querySelectorAll('.cell'));
-            let baselineNums = cells.map(c => parseInt(c.dataset.num));
-            
-            let linesCount = 0;
-            let currentBoardMatrix = [];
-            for (let i = 0; i < 5; i++) {
-                currentBoardMatrix.push(baselineNums.slice(i * 5, (i + 1) * 5).map(n => simulatedHistory.includes(n)));
-            }
-
-            for (let r = 0; r < 5; r++) if (currentBoardMatrix[r].every(v => v)) linesCount++;
-            for (let c = 0; c < 5; c++) if ([0,1,2,3,4].every(r => currentBoardMatrix[r][c])) linesCount++;
-            if ([0,1,2,3,4].every(i => currentBoardMatrix[i][i])) linesCount++;
-            if ([0,1,2,3,4].every(i => currentBoardMatrix[i][4 - i])) linesCount++;
-
-            let returns = { status: 'playing', p1_add: 0, p2_add: 0 };
-
-            if (linesCount >= 5) {
-                if (myRole === 'p1') { returns.status = 'p1_won'; returns.p1_add = 1; }
-                else { returns.status = 'p2_won'; returns.p2_add = 1; }
-            } else if (simulatedHistory.length === 25) {
-                returns.status = 'draw';
-            }
-            return returns;
+            setTimeout(() => {
+                const searchParams = window.location.search;
+                window.location.href = `./live.html${searchParams}`;
+            }, 350);
         }
     </script>
 </body>
