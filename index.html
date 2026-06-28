@@ -81,6 +81,7 @@
         let myRole = null; 
         let playerName = "";
         let gameState = {};
+        let gameChannel = null;
 
         async function joinGame() {
             playerName = document.getElementById('name-input').value.trim();
@@ -89,7 +90,6 @@
             if (!playerName) return alert("Please enter your name!");
             if (!roomCode) return alert("Please enter a room code!");
 
-            // Save board layout configuration to prevent shifting items during browser reloads
             const storageKey = `bingo_board_${roomCode}`;
             const cachedBoard = localStorage.getItem(storageKey);
             if (cachedBoard) {
@@ -103,12 +103,10 @@
                 let { data: game } = await supabaseApp.from('games').select('*').eq('room_code', roomCode).maybeSingle();
 
                 if (!game) {
-                    // Create new room layout structure if none exists
-                    let { data: newGame } = await supabaseApp.from('games').insert([{ room_code: roomCode, player1_name: playerName }]).select().single();
+                    let { data: newGame } = await supabaseApp.from('games').insert([{ room_code: roomCode, player1_name: playerName, history: [] }]).select().single();
                     game = newGame;
                     myRole = 'p1';
                 } else {
-                    // Match by name string values to allow reconnection logic safely
                     if (game.player1_name === playerName) {
                         myRole = 'p1';
                     } else if (game.player2_name === playerName) {
@@ -122,11 +120,11 @@
                         game = updatedGame;
                         myRole = 'p2';
                     } else {
-                        return alert("Room is full! Player 1 and Player 2 are already assigned.");
+                        return alert("Room is full!");
                     }
                 }
 
-                currentRoom = game.room_code;
+                currentRoom = roomCode;
                 gameState = game;
 
                 document.getElementById('setup').classList.add('hidden');
@@ -134,7 +132,6 @@
                 document.getElementById('role-display').innerText = `Logged in as: ${playerName} (${myRole.toUpperCase()})`;
 
                 renderBoard();
-                processStateUpdate();
                 listenToRoom();
             } catch (err) {
                 console.error(err);
@@ -142,14 +139,36 @@
         }
 
         function listenToRoom() {
-            // Listen to ALL events (wildcard '*') to capture edge connections correctly
-            supabaseApp.channel('game-room')
+            // Using a single unified real-time channel for both database changes AND broadcast messages
+            gameChannel = supabaseApp.channel(`room-${currentRoom}`, {
+                config: { broadcast: { self: true } }
+            });
+
+            gameChannel
                 .on('postgres_changes', { event: '*', filter: `room_code=eq.${currentRoom}`, schema: 'public', table: 'games' }, 
                 (payload) => {
                     gameState = payload.new;
                     processStateUpdate();
                 })
-                .subscribe();
+                .on('broadcast', { event: 'force-sync' }, (payload) => {
+                    // Instantly fetch the fresh data from db whenever any player triggers a visual event
+                    fetchLatestGameState();
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // Trigger an initial sync broadcast so the opponent knows we connected
+                        gameChannel.send({ type: 'broadcast', event: 'force-sync', payload: {} });
+                        fetchLatestGameState();
+                    }
+                });
+        }
+
+        async function fetchLatestGameState() {
+            let { data: game } = await supabaseApp.from('games').select('*').eq('room_code', currentRoom).maybeSingle();
+            if (game) {
+                gameState = game;
+                processStateUpdate();
+            }
         }
 
         function processStateUpdate() {
@@ -172,7 +191,7 @@
             if (gameState.game_status === 'waiting') {
                 banner.innerText = "Both players connected. Click 'Start Game' to begin!";
                 banner.className = "status-banner waiting";
-                startBtn.classList.remove('hidden'); // Visible to everyone
+                startBtn.classList.remove('hidden'); 
                 undoBtn.disabled = true;
                 return;
             }
@@ -194,10 +213,12 @@
                 return;
             }
 
-            // Game Loop: Player 1 has even turns (0, 2, 4...), Player 2 has odd turns (1, 3, 5...)
-            let activePlayer = (gameState.history.length % 2 === 0) ? 'p1' : 'p2';
+            // Game turn mapping
+            let historyArray = gameState.history || [];
+            let activePlayer = (historyArray.length % 2 === 0) ? 'p1' : 'p2';
+            
             if (myRole === activePlayer) {
-                banner.innerText = "Your Turn! Select a number from your board.";
+                banner.innerText = "Your Turn! Select a number.";
                 banner.className = "status-banner your-turn";
             } else {
                 const activeName = activePlayer === 'p1' ? gameState.player1_name : gameState.player2_name;
@@ -205,29 +226,28 @@
                 banner.className = "status-banner waiting";
             }
 
-            undoBtn.disabled = !(gameState.history.length > 0 && gameState.last_action_by === myRole && !gameState.undo_used_this_turn);
+            undoBtn.disabled = !(historyArray.length > 0 && gameState.last_action_by === myRole && !gameState.undo_used_this_turn);
 
             refreshCellVisibilities();
             calculateCompletedLines();
         }
 
-       async function startGameRound() {
-            try {
-                // Force reset all parameters securely with proper data type defaults
-                const { error } = await supabaseApp.from('games').update({
-                    game_status: 'playing',
-                    history: [], // Ensure it explicitly sends an empty array structure
-                    last_action_by: null,
-                    undo_used_this_turn: false
-                }).eq('room_code', currentRoom);
+        async function startGameRound() {
+            // Reset the layout mapping storage so that a completely fresh game round shuffles numbers cleanly
+            localStorage.removeItem(`bingo_board_${currentRoom}`);
+            myBoard = Array.from({length: 25}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            localStorage.setItem(`bingo_board_${currentRoom}`, JSON.stringify(myBoard));
+            renderBoard();
 
-                if (error) {
-                    console.error("Error starting game from Supabase:", error);
-                    alert("Could not start game: " + error.message);
-                }
-            } catch (err) {
-                console.error("Unexpected handler exception:", err);
-            }
+            await supabaseApp.from('games').update({
+                game_status: 'playing',
+                history: [],
+                last_action_by: null,
+                undo_used_this_turn: false
+            }).eq('room_code', currentRoom);
+
+            // Send a real-time broadcast payload to instantly sync both devices
+            gameChannel.send({ type: 'broadcast', event: 'force-sync', payload: {} });
         }
 
         function renderBoard() {
@@ -248,7 +268,7 @@
             document.querySelectorAll('.cell').forEach(cell => {
                 let num = parseInt(cell.dataset.num);
                 if (history.includes(num)) {
-                    cell.classList.add('chosen'); // Red color indicator toggle
+                    cell.classList.add('chosen'); 
                 } else {
                     cell.classList.remove('chosen');
                 }
@@ -258,11 +278,12 @@
         async function selectCellNumber(num) {
             if (gameState.game_status !== 'playing') return;
             
-            let activePlayer = (gameState.history.length % 2 === 0) ? 'p1' : 'p2';
+            let historyArray = gameState.history || [];
+            let activePlayer = (historyArray.length % 2 === 0) ? 'p1' : 'p2';
             if (myRole !== activePlayer) return alert("It is not your turn!");
-            if (gameState.history.includes(num)) return;
+            if (historyArray.includes(num)) return;
 
-            let updatedHistory = [...gameState.history, num];
+            let updatedHistory = [...historyArray, num];
             let roundResults = evaluateBoardMetricsForUpdate(updatedHistory);
 
             await supabaseApp.from('games').update({
@@ -270,16 +291,18 @@
                 last_action_by: myRole,
                 undo_used_this_turn: false,
                 game_status: roundResults.status,
-                p1_score: gameState.p1_score + roundResults.p1_add,
-                p2_score: gameState.p2_score + roundResults.p2_add
+                p1_score: (gameState.p1_score || 0) + roundResults.p1_add,
+                p2_score: (gameState.p2_score || 0) + roundResults.p2_add
             }).eq('room_code', currentRoom);
+
+            gameChannel.send({ type: 'broadcast', event: 'force-sync', payload: {} });
         }
 
         async function executeUndo() {
             if (gameState.game_status !== 'playing') return;
             if (gameState.last_action_by !== myRole || gameState.undo_used_this_turn) return alert("Undo unavailable.");
 
-            let updatedHistory = [...gameState.history];
+            let updatedHistory = [...(gameState.history || [])];
             updatedHistory.pop(); 
 
             await supabaseApp.from('games').update({
@@ -287,6 +310,8 @@
                 last_action_by: myRole,
                 undo_used_this_turn: true
             }).eq('room_code', currentRoom);
+
+            gameChannel.send({ type: 'broadcast', event: 'force-sync', payload: {} });
         }
 
         function calculateCompletedLines() {
