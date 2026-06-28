@@ -18,25 +18,25 @@
             --border-glass: rgba(255, 255, 255, 0.08);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cabinet Grotesk', 'Segoe UI', system-ui, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         
         body {
             background: var(--bg-gradient);
             color: var(--text-main);
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
         h1.main-title {
-            font-size: 2.8rem;
+            font-size: 2.5rem;
             font-weight: 800;
             background: linear-gradient(to right, #6366f1, #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             letter-spacing: -1px;
         }
 
@@ -46,18 +46,47 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
             border-radius: 24px;
-            padding: 35px;
+            padding: 30px;
             width: 100%;
             max-width: 500px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* Responsive Layout for Visualizing Both Boards Side-by-Side */
+        .game-layout {
+            display: flex;
+            gap: 30px;
+            max-width: 1100px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .board-container {
+            flex: 1;
+            min-width: 320px;
+            max-width: 480px;
+            background: rgba(30, 41, 59, 0.4);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .board-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+        .board-title.active-user { color: var(--primary); }
 
         .hidden { display: none !important; }
 
         /* Form Controls */
         .form-group { margin-bottom: 20px; text-align: left; }
-        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         
         input, select {
             width: 100%;
@@ -67,12 +96,11 @@
             border-radius: 12px;
             color: #fff;
             font-size: 1rem;
-            transition: all 0.3s ease;
         }
-        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2); }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
 
         .radio-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .radio-tab { flex: 1; text-align: center; padding: 12px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-glass); border-radius: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .radio-tab { flex: 1; text-align: center; padding: 12px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-glass); border-radius: 12px; cursor: pointer; font-weight: 600; }
         .radio-tab.active { background: var(--primary); border-color: var(--primary); }
 
         button.btn-premium {
@@ -86,29 +114,25 @@
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
-            transition: all 0.3s;
         }
-        button.btn-premium:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99, 102, 241, 0.4); }
-        button.btn-premium:disabled { background: #334155; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* Game Arena Elements */
-        .scoreboard { display: flex; justify-content: space-between; background: rgba(15, 23, 42, 0.5); padding: 15px 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border-glass); }
+        /* Game Elements */
+        .scoreboard { display: flex; justify-content: space-between; background: rgba(15, 23, 42, 0.5); padding: 15px 20px; border-radius: 16px; margin-bottom: 20px; width: 100%; max-width: 500px; border: 1px solid var(--border-glass); }
         .score-box { text-align: center; }
         .score-box .name { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
         .score-box .val { font-size: 1.8rem; font-weight: 800; color: #fff; }
 
-        .status-banner { padding: 14px; border-radius: 12px; font-weight: 700; margin-bottom: 20px; text-align: center; font-size: 1rem; letter-spacing: 0.5px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1); }
+        .status-banner { padding: 14px; border-radius: 12px; font-weight: 700; margin-bottom: 20px; text-align: center; width: 100%; max-width: 500px; }
         .status-banner.turn { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
         .status-banner.wait { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
 
-        /* Dynamic Word Tracker */
-        .word-tracker { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
-        .letter-node { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-glass); border-radius: 10px; font-size: 1.4rem; font-weight: 900; color: #475569; position: relative; transition: all 0.4s; }
-        .letter-node.struck { color: var(--accent); background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.4); box-shadow: 0 0 15px rgba(244, 63, 94, 0.2); }
-        .letter-node.struck::after { content: ''; position: absolute; width: 120%; height: 3px; background: var(--accent); transform: rotate(-30deg); }
+        .word-tracker { display: flex; justify-content: center; gap: 6px; margin: 10px 0 20px 0; }
+        .letter-node { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-glass); border-radius: 8px; font-size: 1.2rem; font-weight: 900; color: #475569; position: relative; }
+        .letter-node.struck { color: var(--accent); background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.4); }
+        .letter-node.struck::after { content: ''; position: absolute; width: 120%; height: 2px; background: var(--accent); transform: rotate(-30deg); }
 
-        /* Dynamic Grid Engine */
-        .grid { display: grid; gap: 8px; margin: 25px 0; }
+        /* Grids */
+        .grid { display: grid; gap: 6px; }
         .cell {
             aspect-ratio: 1;
             display: flex;
@@ -116,21 +140,22 @@
             justify-content: center;
             background: rgba(30, 41, 59, 0.5);
             border: 1px solid var(--border-glass);
-            border-radius: 10px;
+            border-radius: 8px;
             font-weight: 700;
-            font-size: calc(1rem + 0.2vw);
+            font-size: 1.1rem;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
+            transition: all 0.2s;
         }
-        .cell:hover:not(.chosen) { background: var(--primary); color: white; transform: scale(1.05); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); }
-        .cell.chosen { background: linear-gradient(135deg, var(--accent) 0%, #be123c 100%); color: white; cursor: not-allowed; border: none; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3); animation: pop 0.3s ease; }
+        .cell:hover:not(.chosen) { background: var(--primary); color: white; }
+        .cell.chosen { background: linear-gradient(135deg, var(--accent) 0%, #be123c 100%); color: white; cursor: not-allowed; border: none; }
+        
+        /* Spectator View for Opponent Board */
+        .cell.opponent-view { cursor: not-allowed; }
+        .cell.opponent-view:hover { background: rgba(30, 41, 59, 0.5); color: inherit; }
 
-        @keyframes pop { 0% { transform: scale(0.8); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
-        .footer-actions { display: flex; gap: 12px; }
-        .btn-secondary { background: rgba(64, 74, 89, 0.4); border: 1px solid var(--border-glass); color: #fff; flex: 1; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-secondary:hover:not(:disabled) { background: rgba(64, 74, 89, 0.7); }
+        .footer-actions { display: flex; gap: 12px; margin-top: 20px; width: 100%; max-width: 500px; }
+        .btn-secondary { background: rgba(64, 74, 89, 0.4); border: 1px solid var(--border-glass); color: #fff; flex: 1; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; }
         .btn-secondary:disabled { opacity: 0.3; cursor: not-allowed; }
     </style>
 </head>
@@ -138,6 +163,7 @@
 
     <h1 class="main-title">BINGO ROYALE</h1>
 
+    <!-- SETUP INPUT PANEL -->
     <div id="setup-panel" class="glass-panel">
         <div class="form-group">
             <label>Opponent Type</label>
@@ -149,10 +175,10 @@
 
         <div class="form-group">
             <label>Your Profile Name</label>
-            <input type="text" id="name-input" placeholder="Enter warrior alias..." maxlength="12">
+            <input type="text" id="name-input" placeholder="Enter name..." maxlength="12">
         </div>
 
-        <div class="form-group" id="room-group" class="hidden" style="display:none;">
+        <div class="form-group" id="room-group" style="display:none;">
             <label>Online Room Code</label>
             <input type="text" id="room-input" placeholder="e.g. ALPHA99" maxlength="8">
         </div>
@@ -160,27 +186,28 @@
         <div class="form-group" id="ai-diff-group">
             <label>Computer Difficulty</label>
             <select id="ai-difficulty">
-                <option value="easy">Easy (Random choices)</option>
-                <option value="medium">Medium (Builds rows)</option>
-                <option value="hard">Hard (Aggressive Block/Attack AI)</option>
+                <option value="easy">Easy (Random)</option>
+                <option value="medium">Medium (Tactical)</option>
+                <option value="hard">Hard (Aggressive)</option>
             </select>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="grid-scale-group">
             <label>Grid Matrix Scale</label>
-            <select id="grid-size" onchange="adaptGridRangeLabel()">
-                <option value="4">4 x 4 Matrix (Numbers 1-16)</option>
-                <option value="5" selected>5 x 5 Matrix (Numbers 1-25)</option>
-                <option value="6">6 x 6 Matrix (Numbers 1-36)</option>
-                <option value="8">8 x 8 Matrix (Numbers 1-64)</option>
-                <option value="10">10 x 10 Matrix (Numbers 1-100)</option>
+            <select id="grid-size">
+                <option value="4">4 x 4 Matrix (1-16)</option>
+                <option value="5" selected>5 x 5 Matrix (1-25)</option>
+                <option value="6">6 x 6 Matrix (1-36)</option>
+                <option value="8">8 x 8 Matrix (1-64)</option>
+                <option value="10">10 x 10 Matrix (1-100)</option>
             </select>
         </div>
 
         <button class="btn-premium" onclick="initiateGameEngine()">Enter Battle Arena</button>
     </div>
 
-    <div id="arena-panel" class="glass-panel hidden">
+    <!-- MAIN ACTIVE GAME INTERFACE -->
+    <div id="arena-panel" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
         <div class="scoreboard">
             <div class="score-box">
                 <div class="name" id="p1-title">Player 1</div>
@@ -193,12 +220,24 @@
         </div>
 
         <div id="status-banner" class="status-banner turn">Your Turn</div>
+        <button id="start-btn" class="btn-premium hidden" style="max-width:500px; margin-bottom:20px;" onclick="startRoundLoop()">Start Round</button>
 
-        <div class="word-tracker" id="word-container"></div>
+        <!-- SPLIT ARENA RESPONSIVE DUAL GRID AREA -->
+        <div class="game-layout">
+            <!-- LEFT CONTAINER: MY LIVE BOARD -->
+            <div class="board-container">
+                <div class="board-title active-user" id="local-board-label">Your Board</div>
+                <div class="word-tracker" id="word-container-p1"></div>
+                <div id="board-p1" class="grid"></div>
+            </div>
 
-        <button id="start-btn" class="btn-premium hidden" onclick="startRoundLoop()">Start New Round</button>
-
-        <div id="board" class="grid"></div>
+            <!-- RIGHT CONTAINER: OPPONENT / COMPUTER BOARD -->
+            <div class="board-container" id="opponent-panel">
+                <div class="board-title" id="remote-board-label">Opponent Board</div>
+                <div class="word-tracker" id="word-container-p2"></div>
+                <div id="board-p2" class="grid"></div>
+            </div>
+        </div>
 
         <div class="footer-actions">
             <button id="undo-btn" class="btn-secondary" onclick="triggerUndoAction()" disabled>Undo Last Move</button>
@@ -206,15 +245,11 @@
     </div>
 
     <script>
-        const SUPABASE_URL = "https://euzjovtsereckmwvvunm.supabase.co"; 
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1empvdnRzZXJlY2ttd3Z2dW5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NDYxODAsImV4cCI6MjA4OTAyMjE4MH0.dTRA6a8B-fPjjeaRlM6c8NwhbYWCJgCuF1c9Oz4RY7I";
-        const supabaseApp = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let gameMode = 'ai'; // 'ai' or 'pvp'
+        let gameMode = 'ai'; 
         let gridSize = 5;
         let totalCells = 25;
         let myBoard = [];
-        let aiBoard = []; // Shuffled layout tracking array specifically generated for computing simulated bot paths
+        let opponentBoard = []; 
         let currentRoom = null;
         let myRole = 'p1'; 
         let playerName = "";
@@ -229,77 +264,102 @@
             document.getElementById('ai-diff-group').style.display = mode === 'ai' ? 'block' : 'none';
         }
 
-        function initiateGameEngine() {
-            playerName = document.getElementById('name-input').value.trim() || "Player";
-            gridSize = parseInt(document.getElementById('grid-size').value);
-            totalCells = gridSize * gridSize;
-
-            // Generate B-I-N-G-O tracking node header structures dynamically matching matrix dimensions
-            const tracker = document.getElementById('word-container');
+        function buildWordHeaders(elementId) {
+            const tracker = document.getElementById(elementId);
             tracker.innerHTML = '';
             const targetWord = "BINGO".repeat(Math.ceil(gridSize/5)).substring(0, gridSize);
             for(let i=0; i<gridSize; i++) {
-                tracker.innerHTML += `<div class="letter-node" id="b-l-${i}">${targetWord[i]}</div>`;
+                tracker.innerHTML += `<div class="letter-node" id="${elementId}-l-${i}">${targetWord[i]}</div>`;
             }
+        }
 
-            document.getElementById('board').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-
+        function initiateGameEngine() {
+            playerName = document.getElementById('name-input').value.trim() || "Player";
+            
             if (gameMode === 'ai') {
+                gridSize = parseInt(document.getElementById('grid-size').value);
+                totalCells = gridSize * gridSize;
                 launchSinglePlayerMode();
             } else {
                 launchMultiplayerPvPMode();
             }
         }
 
-        /* SINGLE PLAYER CONTROLLER ENGINE WITH DYNAMIC BOT AI */
         function launchSinglePlayerMode() {
             myBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
-            aiBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            opponentBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
             
-            gameState = { history: [], game_status: 'playing', p1_score: 0, p2_score: 0, player1_name: playerName, player2_name: "CPU ("+document.getElementById('ai-difficulty').value.toUpperCase()+")" };
+            gameState = { history: [], game_status: 'playing', p1_score: 0, p2_score: 0, player1_name: playerName, player2_name: "CPU", grid_scale: gridSize };
             myRole = 'p1';
 
-            document.getElementById('setup-panel').classList.add('hidden');
-            document.getElementById('arena-panel').classList.remove('hidden');
-            
-            renderBoard();
-            syncLocalArenaUI();
+            setupUILayoutContainers();
         }
 
-        /* MULTIPLAYER CONTROLLER WITH INTEGRATED BROADCAST ROUTING */
         async function launchMultiplayerPvPMode() {
             const roomCode = document.getElementById('room-input').value.trim().toUpperCase();
             if(!roomCode) return alert("Specify room connection code!");
-
-            myBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
 
             try {
                 let { data: game } = await supabaseApp.from('games').select('*').eq('room_code', roomCode).maybeSingle();
 
                 if (!game) {
-                    let { data: nGame } = await supabaseApp.from('games').insert([{ room_code: roomCode, player1_name: playerName, history: [] }]).select().single();
+                    // Player 1 sets the grid scale explicitly
+                    gridSize = parseInt(document.getElementById('grid-size').value);
+                    totalCells = gridSize * gridSize;
+
+                    let { data: nGame } = await supabaseApp.from('games').insert([{ 
+                        room_code: roomCode, player1_name: playerName, history: [], grid_scale: gridSize 
+                    }]).select().single();
                     game = nGame; myRole = 'p1';
                 } else {
+                    // Player 2 FORCED into the host's grid size selection setup
+                    gridSize = parseInt(game.grid_scale) || 5;
+                    totalCells = gridSize * gridSize;
+                    
                     if (game.player1_name === playerName) myRole = 'p1';
                     else if (game.player2_name === playerName) myRole = 'p2';
-                    else if (!game.player1_name) {
-                        let { data: uG } = await supabaseApp.from('games').update({ player1_name: playerName }).eq('room_code', roomCode).select().single();
-                        game = uG; myRole = 'p1';
-                    } else if (!game.player2_name) {
+                    else if (!game.player2_name) {
                         let { data: uG } = await supabaseApp.from('games').update({ player2_name: playerName }).eq('room_code', roomCode).select().single();
                         game = uG; myRole = 'p2';
-                    } else { return alert("Room configuration slot filled!"); }
+                    } else { return alert("Room is full!"); }
                 }
 
                 currentRoom = roomCode;
                 gameState = game;
 
-                document.getElementById('setup-panel').classList.add('hidden');
-                document.getElementById('arena-panel').classList.remove('hidden');
-                
-                renderBoard();
+                // Sync layout setups across random client configuration reloads
+                const boardKey = `bingo_board_${roomCode}`;
+                if(localStorage.getItem(boardKey)) {
+                    myBoard = JSON.parse(localStorage.getItem(boardKey));
+                } else {
+                    myBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+                    localStorage.setItem(boardKey, JSON.stringify(myBoard));
+                }
+
+                setupUILayoutContainers();
                 connectRealtimeSyncStream();
             } catch (x) { console.error(x); }
+        }
+
+        function setupUILayoutContainers() {
+            document.getElementById('setup-panel').classList.add('hidden');
+            document.getElementById('arena-panel').classList.remove('hidden');
+
+            document.getElementById('board-p1').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            document.getElementById('board-p2').style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+            buildWordHeaders('word-container-p1');
+            buildWordHeaders('word-container-p2');
+
+            // Hide opponent board display container *only* if playing blind online multiplayer PvP mode
+            if(gameMode === 'pvp') {
+                document.getElementById('opponent-panel').classList.add('hidden');
+            } else {
+                document.getElementById('opponent-panel').classList.remove('hidden');
+            }
+
+            renderBoards();
+            syncLocalArenaUI();
         }
 
         function connectRealtimeSyncStream() {
@@ -328,12 +388,15 @@
             document.getElementById('p1-score').innerText = gameState.p1_score || 0;
             document.getElementById('p2-score').innerText = gameState.p2_score || 0;
 
+            document.getElementById('local-board-label').innerText = `${gameState.player1_name || "Player 1"}'s Board`;
+            document.getElementById('remote-board-label').innerText = `${gameState.player2_name || "Opponent"}'s Board`;
+
             const banner = document.getElementById('status-banner');
             const startBtn = document.getElementById('start-btn');
             const undoBtn = document.getElementById('undo-btn');
 
             if (gameMode === 'pvp' && (!gameState.player1_name || !gameState.player2_name)) {
-                banner.innerText = "Awaiting deployment entry from opponent...";
+                banner.innerText = "Awaiting entry from opponent...";
                 banner.className = "status-banner wait";
                 return;
             }
@@ -349,13 +412,13 @@
             startBtn.classList.add('hidden');
 
             if (gameState.game_status.includes('_won') || gameState.game_status === 'draw') {
-                banner.innerText = gameState.game_status === 'draw' ? "Round ended in full draw match stagnation." : `Victory concluded for ${gameState.game_status === 'p1_won' ? gameState.player1_name : gameState.player2_name}!`;
+                banner.innerText = gameState.game_status === 'draw' ? "Round ended in a draw!" : `Victory for ${gameState.game_status === 'p1_won' ? gameState.player1_name : gameState.player2_name}!`;
                 banner.className = "status-banner";
                 startBtn.classList.remove('hidden');
-                startBtn.innerText = "Launch Next Match Round";
                 undoBtn.disabled = true;
                 refreshBoardVisualMarkings();
-                calculateCrossedLines(myBoard);
+                calculateCrossedLines(myBoard, 'word-container-p1');
+                if(gameMode === 'ai') calculateCrossedLines(opponentBoard, 'word-container-p2');
                 return;
             }
 
@@ -364,37 +427,49 @@
                 banner.innerText = "Your Turn! Pick a tile.";
                 banner.className = "status-banner turn";
             } else {
-                banner.innerText = `Awaiting strategic move from ${activeSide === 'p1' ? gameState.player1_name : gameState.player2_name}...`;
+                banner.innerText = `Awaiting move from ${activeSide === 'p1' ? gameState.player1_name : gameState.player2_name}...`;
                 banner.className = "status-banner wait";
             }
 
             undoBtn.disabled = !(gameState.history.length > 0 && gameState.last_action_by === myRole && !gameState.undo_used_this_turn);
             
             refreshBoardVisualMarkings();
-            calculateCrossedLines(myBoard);
+            calculateCrossedLines(myBoard, 'word-container-p1');
+            if(gameMode === 'ai') calculateCrossedLines(opponentBoard, 'word-container-p2');
 
-            // Execute automated bot calculations if single-player evaluation routes active
             if(gameMode === 'ai' && activeSide === 'p2' && gameState.game_status === 'playing') {
-                setTimeout(executeComputerAIAction, 700);
+                setTimeout(executeComputerAIAction, 800);
             }
         }
 
-        function renderBoard() {
-            const board = document.getElementById('board');
-            board.innerHTML = '';
+        function renderBoards() {
+            // Render local user board mapping
+            const boardP1 = document.getElementById('board-p1');
+            boardP1.innerHTML = '';
             myBoard.forEach(num => {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
                 cell.innerText = num;
                 cell.dataset.num = num;
                 cell.addEventListener('click', () => actionCellSelect(num));
-                board.appendChild(cell);
+                boardP1.appendChild(cell);
+            });
+
+            // Render right side display view container layout if computer player tracking active
+            const boardP2 = document.getElementById('board-p2');
+            boardP2.innerHTML = '';
+            opponentBoard.forEach(num => {
+                const cell = document.createElement('div');
+                cell.className = 'cell opponent-view';
+                cell.innerText = num;
+                cell.dataset.num = num;
+                boardP2.appendChild(cell);
             });
         }
 
         function refreshBoardVisualMarkings() {
             const history = gameState.history || [];
-            document.querySelectorAll('.cell').forEach(c => {
+            document.querySelectorAll('.grid .cell').forEach(c => {
                 c.classList.toggle('chosen', history.includes(parseInt(c.dataset.num)));
             });
         }
@@ -431,19 +506,17 @@
             }
         }
 
-        /* BRAIN OF THE COMPUTER AI LOGIC ENGINE */
         function executeComputerAIAction() {
             const history = gameState.history;
             let unchosen = Array.from({length: totalCells}, (_, i) => i + 1).filter(n => !history.includes(n));
             if(unchosen.length === 0) return;
 
             let diff = document.getElementById('ai-difficulty').value;
-            let chosenNum = unchosen[0]; // Fallback baseline choice initialization
+            let chosenNum = unchosen[0]; 
 
             if (diff === 'easy' || unchosen.length === 1) {
                 chosenNum = unchosen[Math.floor(Math.random() * unchosen.length)];
             } else {
-                // Medium & Hard modes compute weights based on structural line density arrays
                 let bestScore = -1;
                 unchosen.forEach(num => {
                     let score = evaluateCellWeightMetrics(num, diff === 'hard');
@@ -451,25 +524,22 @@
                 });
             }
 
-            myRole = 'p2'; // Momentarily assign active role instance flag tracking to permit pipeline processing
+            myRole = 'p2'; 
             processSelectionStep(chosenNum);
-            myRole = 'p1'; // Revert context back to player ownership limits safely
+            myRole = 'p1'; 
         }
 
         function evaluateCellWeightMetrics(num, checkOpponentLines) {
             let totalWeight = 0;
-            
-            // Analyze weights relative to the AI's board orientation grid mapping array
-            let aiIndex = aiBoard.indexOf(num);
+            let aiIndex = opponentBoard.indexOf(num);
             let aiRow = Math.floor(aiIndex / gridSize);
             let aiCol = aiIndex % gridSize;
 
-            totalWeight += checkLineWeight(aiBoard.filter((_, i) => Math.floor(i / gridSize) === aiRow));
-            totalWeight += checkLineWeight(aiBoard.filter((_, i) => (i % gridSize) === aiCol));
-            if(aiRow === aiCol) totalWeight += checkLineWeight(aiBoard.filter((_, i) => Math.floor(i / gridSize) === (i % gridSize)));
-            if(aiRow + aiCol === gridSize - 1) totalWeight += checkLineWeight(aiBoard.filter((_, i) => Math.floor(i / gridSize) + (i % gridSize) === gridSize - 1));
+            totalWeight += checkLineWeight(opponentBoard.filter((_, i) => Math.floor(i / gridSize) === aiRow));
+            totalWeight += checkLineWeight(opponentBoard.filter((_, i) => (i % gridSize) === aiCol));
+            if(aiRow === aiCol) totalWeight += checkLineWeight(opponentBoard.filter((_, i) => Math.floor(i / gridSize) === (i % gridSize)));
+            if(aiRow + aiCol === gridSize - 1) totalWeight += checkLineWeight(opponentBoard.filter((_, i) => Math.floor(i / gridSize) + (i % gridSize) === gridSize - 1));
 
-            // Hard difficulty cross-evaluates Player 1's layout structure to intercept high-threat victory points
             if (checkOpponentLines) {
                 let p1Index = myBoard.indexOf(num);
                 let p1Row = Math.floor(p1Index / gridSize);
@@ -481,17 +551,16 @@
                 if(p1Row === p1Col) interceptWeight += checkLineWeight(myBoard.filter((_, i) => Math.floor(i / gridSize) === (i % gridSize)));
                 if(p1Row + p1Col === gridSize - 1) interceptWeight += checkLineWeight(myBoard.filter((_, i) => Math.floor(i / gridSize) + (i % gridSize) === gridSize - 1));
 
-                totalWeight += interceptWeight * 1.2; // Scaling multiplier factors block tracking priority slightly above base attacks
+                totalWeight += interceptWeight * 1.3; 
             }
-
             return totalWeight;
         }
 
         function checkLineWeight(cellArray) {
             let history = gameState.history;
             let markedCount = cellArray.filter(n => history.includes(n)).length;
-            if(markedCount === gridSize) return 0; // Already completed line paths lose dynamic tactical execution value
-            return Math.pow(markedCount + 1, 2); // Exponential scaling calculation structure prioritizes paths near completion
+            if(markedCount === gridSize) return 0; 
+            return Math.pow(markedCount + 1, 2);
         }
 
         async function triggerUndoAction() {
@@ -512,8 +581,13 @@
 
         async function startRoundLoop() {
             myBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
-            aiBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
-            renderBoard();
+            if(gameMode === 'ai') opponentBoard = Array.from({length: totalCells}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            
+            if(gameMode === 'pvp') {
+                localStorage.setItem(`bingo_board_${currentRoom}`, JSON.stringify(myBoard));
+            }
+
+            renderBoards();
 
             if (gameMode === 'ai') {
                 gameState.history = [];
@@ -527,7 +601,7 @@
             }
         }
 
-        function calculateCrossedLines(targetLayoutArray) {
+        function calculateCrossedLines(targetLayoutArray, trackerElementId) {
             const history = gameState.history || [];
             let currentBoardMatrix = [];
             for (let i = 0; i < gridSize; i++) {
@@ -540,29 +614,23 @@
             if ([...Array(gridSize).keys()].every(i => currentBoardMatrix[i][i])) lines++;
             if ([...Array(gridSize).keys()].every(i => currentBoardMatrix[i][gridSize - 1 - i])) lines++;
 
-            // Highlight tracking letter components dynamically based on player status checks
-            if(targetLayoutArray === myBoard) {
-                for (let i = 0; i < gridSize; i++) {
-                    const el = document.getElementById(`b-l-${i}`);
-                    if(el) el.classList.toggle('struck', lines > i);
-                }
+            for (let i = 0; i < gridSize; i++) {
+                const el = document.getElementById(`${trackerElementId}-l-${i}`);
+                if(el) el.classList.toggle('struck', lines > i);
             }
             return lines;
         }
 
         function evaluateSimulatedMetrics(simulatedHistory) {
-            // Evaluates local vs AI grids to check if current move satisfies multi-line win conditions ($N$ total lines completed)
             let oldHistory = gameState.history;
-            gameState.history = simulatedHistory; // Temporarily swap histories to accurately gauge multi-line updates
+            gameState.history = simulatedHistory; 
 
-            let p1Lines = calculateCrossedLines(myBoard);
-            let p2Lines = gameMode === 'ai' ? calculateCrossedLines(aiBoard) : p1Lines; // PvP paths evaluated independently during loop updates
+            let p1Lines = calculateCrossedLines(myBoard, 'word-container-p1');
+            let p2Lines = gameMode === 'ai' ? calculateCrossedLines(opponentBoard, 'word-container-p2') : p1Lines; 
 
-            gameState.history = oldHistory; // Restore default values back safely
+            gameState.history = oldHistory; 
 
             let result = { status: 'playing', p1_add: 0, p2_add: 0 };
-            
-            // Check for wins where total completed lines meets or exceeds the dimension threshold ($N$)
             let p1Win = p1Lines >= gridSize;
             let p2Win = p2Lines >= gridSize;
 
@@ -572,11 +640,6 @@
             else if (simulatedHistory.length === totalCells) { result.status = 'draw'; }
 
             return result;
-        }
-
-        function adaptGridRangeLabel() {
-            // Utility layout optimization handler updating UI text contexts seamlessly
-            const val = document.getElementById('grid-size').value;
         }
     </script>
 </body>
