@@ -165,8 +165,17 @@
         // WebRTC Signaling Engine States
         let localStream = null;
         let peerConnection = null;
-        const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-
+        // const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        const rtcConfig = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            {
+                urls: 'turn:192.168.15.115:3478', 
+                username: 'srm_admin',
+                credential: 'supersecure123'
+            }
+        ]
+        };
         // 1. AUTO-FILL URL ARGS ON ENTRY ROUTING
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
